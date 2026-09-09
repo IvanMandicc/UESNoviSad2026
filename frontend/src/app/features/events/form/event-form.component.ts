@@ -42,7 +42,9 @@ export class EventFormComponent {
     date: ['', [Validators.required]],
     regular: [false],
     freeEntry: [true],
-    price: ['']
+    // <input type="number"> upisuje broj (ili null) u kontrolu, pa polje mora
+    // biti tipizirano kao broj - inace .trim() puca pri cuvanju.
+    price: [null as number | null]
   });
 
   constructor() {
@@ -89,7 +91,7 @@ export class EventFormComponent {
           date: event.date.substring(0, 16),
           regular: event.regular,
           freeEntry: event.freeEntry,
-          price: event.price !== null ? String(event.price) : ''
+          price: event.price
         });
         this.currentImageUrl.set(this.eventsService.imageUrl(event));
         this.loading.set(false);
@@ -118,8 +120,8 @@ export class EventFormComponent {
       this.errorMessage.set('Slika događaja je obavezna.');
       return;
     }
-    if (!values.freeEntry && !values.price.trim()) {
-      this.errorMessage.set('Unesite cenu ulaska ili označite da je događaj besplatan.');
+    if (!values.freeEntry && (values.price === null || values.price <= 0)) {
+      this.errorMessage.set('Unesite cenu ulaska veću od nule ili označite da je događaj besplatan.');
       return;
     }
 
@@ -132,7 +134,7 @@ export class EventFormComponent {
     payload.append('regular', String(values.regular));
     payload.append('freeEntry', String(values.freeEntry));
     if (!values.freeEntry) {
-      payload.append('price', values.price.trim());
+      payload.append('price', String(values.price));
     }
     if (this.selectedFile) {
       payload.append('image', this.selectedFile);
