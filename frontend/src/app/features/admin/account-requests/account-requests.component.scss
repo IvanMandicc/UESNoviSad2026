@@ -1,0 +1,65 @@
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  padding: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+th,
+td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.right {
+  text-align: right;
+}
+
+.right .btn + .btn {
+  margin-left: 0.5rem;
+}
+
+.reject-row td {
+  background: var(--surface-alt);
+  white-space: normal;
+}
+
+.reject-row .actions {
+  margin-top: 0.5rem;
+}
+
+.block {
+  display: block;
+  margin-top: 0.25rem;
+  white-space: normal;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+}

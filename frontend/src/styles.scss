@@ -1,0 +1,218 @@
+/* Globalni stilovi aplikacije. */
+
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-alt: #f9fafb;
+  --border: #e2e5ea;
+  --text: #16191d;
+  --muted: #6b7280;
+  --primary: #2f5bd7;
+  --primary-hover: #2749ad;
+  --danger: #c0392b;
+  --danger-hover: #9c2c20;
+  --success-bg: #e7f6ec;
+  --success-text: #1a6b38;
+  --error-bg: #fdeaea;
+  --error-text: #a12a1e;
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  letter-spacing: -0.015em;
+}
+
+h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.15rem;
+}
+
+.subtitle {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+a {
+  color: var(--primary);
+}
+
+/* Kartica */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.page {
+  display: block;
+}
+
+/* Polja forme */
+.field {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.field > span {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(47, 91, 215, 0.15);
+}
+
+.field .error {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--error-text);
+  font-size: 0.8125rem;
+}
+
+/* Dugmad */
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  font: inherit;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8125rem;
+}
+
+.btn-primary {
+  width: auto;
+  color: #fff;
+  background: var(--primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn-danger {
+  color: #fff;
+  background: var(--danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger-hover);
+}
+
+.btn-ghost {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-alt);
+}
+
+form .btn-primary {
+  width: 100%;
+}
+
+/* Poruke */
+.alert {
+  margin-bottom: 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.alert-error {
+  color: var(--error-text);
+  background: var(--error-bg);
+}
+
+.alert-success {
+  color: var(--success-text);
+  background: var(--success-bg);
+}
+
+/* Oznake statusa */
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-pending {
+  color: #8a5a00;
+  background: #fdf1d8;
+}
+
+.badge-approved {
+  color: var(--success-text);
+  background: var(--success-bg);
+}
+
+.badge-rejected {
+  color: var(--error-text);
+  background: var(--error-bg);
+}
+
+.badge-role {
+  color: var(--primary);
+  background: #e8eeff;
+}

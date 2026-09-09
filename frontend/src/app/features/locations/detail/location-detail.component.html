@@ -1,0 +1,136 @@
+<section class="page">
+  @if (errorMessage()) {
+    <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
+  }
+  @if (infoMessage()) {
+    <div class="alert alert-success" role="status">{{ infoMessage() }}</div>
+  }
+
+  @if (location(); as loc) {
+    <a class="back-link" routerLink="/mesta">← Sva mesta</a>
+
+    <div class="card hero">
+      <img [src]="imageUrl()" [alt]="loc.name" />
+      <div class="hero-body">
+        <span class="badge badge-role">{{ typeLabel(loc.type) }}</span>
+        <h1>{{ loc.name }}</h1>
+
+        <!-- [K5] Prosečna ocena mesta; popunjava se kada bude implementiran K5. -->
+        <p class="rating">
+          @if (loc.averageRating !== null) {
+            <strong>{{ loc.averageRating }}</strong> / 10 ({{ loc.reviewCount }} utisaka)
+          } @else {
+            <span class="muted">Još nema ocena</span>
+          }
+        </p>
+
+        <p class="address">{{ loc.address }}</p>
+        <p class="description">{{ loc.description }}</p>
+
+        <div class="hero-actions">
+          @if (canEditAttributes() && !editingAttributes()) {
+            <button type="button" class="btn btn-ghost btn-sm" (click)="startEditingAttributes()">
+              Izmeni atribute
+            </button>
+          }
+          @if (isAdmin()) {
+            <a class="btn btn-ghost btn-sm" [routerLink]="['/mesta', loc.id, 'izmena']">Izmeni sve podatke</a>
+            <button type="button" class="btn btn-danger btn-sm" (click)="deleteLocation()">Ukloni mesto</button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- [K3] Menadžer mesta ažurira adresu, tip mesta i opis. -->
+    @if (editingAttributes()) {
+      <form class="card" [formGroup]="attributesForm" (ngSubmit)="saveAttributes()" novalidate>
+        <h2>Izmena atributa mesta</h2>
+        <p class="subtitle">Naziv i slika se menjaju samo kroz administratorsku izmenu.</p>
+
+        <label class="field">
+          <span>Adresa *</span>
+          <input type="text" formControlName="address" />
+        </label>
+
+        <label class="field">
+          <span>Tip mesta *</span>
+          <select formControlName="type">
+            @for (type of types; track type) {
+              <option [value]="type">{{ typeLabels[type] }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Opis *</span>
+          <textarea formControlName="description" rows="4"></textarea>
+        </label>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="savingAttributes()">
+            {{ savingAttributes() ? 'Čuvanje...' : 'Sačuvaj' }}
+          </button>
+          <button type="button" class="btn btn-ghost" (click)="cancelEditingAttributes()">Otkaži</button>
+        </div>
+      </form>
+    }
+
+    <!-- [K4] Predstojeći događaji na ovom mestu. -->
+    <div class="card">
+      <h2>Predstojeći događaji</h2>
+      <p class="muted">Nema predstojećih događaja. (Rukovanje događajima dolazi sa K4.)</p>
+    </div>
+
+    <!-- [A2] Upravljanje menadžerima mesta — samo administrator. -->
+    @if (isAdmin()) {
+      <div class="card">
+        <h2>Menadžeri mesta</h2>
+        <p class="subtitle">Dodelite ili uklonite menadžere ovog mesta.</p>
+
+        @if (loc.managers.length === 0) {
+          <p class="muted">Ovo mesto još nema menadžera.</p>
+        } @else {
+          <ul class="manager-list">
+            @for (manager of loc.managers; track manager.userId) {
+              <li>
+                <div>
+                  <strong>{{ manager.firstName }} {{ manager.lastName }}</strong>
+                  <small class="muted block">{{ manager.email }}</small>
+                  <small class="muted block">
+                    Dodeljen {{ manager.assignedAt | date: 'dd.MM.yyyy. HH:mm' }}
+                  </small>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm"
+                        [disabled]="assigningUserId() === manager.userId"
+                        (click)="removeManager(manager.userId)">Ukloni</button>
+              </li>
+            }
+          </ul>
+        }
+
+        <div class="assign-row">
+          <label class="field">
+            <span>Dodaj menadžera</span>
+            <select [(ngModel)]="selectedCandidateId" [ngModelOptions]="{ standalone: true }">
+              <option [ngValue]="null">— izaberite korisnika —</option>
+              @for (candidate of availableCandidates(); track candidate.id) {
+                <option [ngValue]="candidate.id">
+                  {{ candidate.firstName }} {{ candidate.lastName }} ({{ candidate.email }})
+                </option>
+              }
+            </select>
+          </label>
+          <button type="button" class="btn btn-primary"
+                  [disabled]="selectedCandidateId === null || assigningUserId() !== null"
+                  (click)="assignManager()">Dodeli</button>
+        </div>
+
+        @if (availableCandidates().length === 0) {
+          <small class="muted">Nema slobodnih korisnika za dodelu.</small>
+        }
+      </div>
+    }
+  } @else if (loading()) {
+    <p class="muted">Učitavanje...</p>
+  }
+</section>

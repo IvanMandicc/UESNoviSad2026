@@ -1,0 +1,40 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Mesta</h1>
+      <p class="subtitle">Pregled svih mesta na kojima se održavaju događaji.</p>
+    </div>
+    @if (isAdmin()) {
+      <a class="btn btn-primary" routerLink="/mesta/novo">Dodaj mesto</a>
+    }
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="muted">Učitavanje...</p>
+  } @else if (locations().length === 0) {
+    <div class="card empty">
+      Još nema unetih mesta.
+      @if (isAdmin()) {
+        Dodajte prvo mesto klikom na dugme iznad.
+      }
+    </div>
+  } @else {
+    <div class="location-grid">
+      @for (location of locations(); track location.id) {
+        <a class="location-card" [routerLink]="['/mesta', location.id]">
+          <img [src]="imageUrl(location)" [alt]="location.name" loading="lazy" />
+          <div class="location-body">
+            <span class="badge badge-role">{{ typeLabel(location.type) }}</span>
+            <h2>{{ location.name }}</h2>
+            <p class="address">{{ location.address }}</p>
+            <p class="description">{{ location.description }}</p>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</section>

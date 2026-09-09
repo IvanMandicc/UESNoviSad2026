@@ -1,0 +1,66 @@
+<section class="page form-page">
+  <form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h1>{{ isEdit() ? 'Izmena mesta' : 'Novo mesto' }}</h1>
+    <p class="subtitle">Naziv, adresa, tip mesta, opis i slika su obavezni.</p>
+
+    @if (errorMessage()) {
+      <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
+    }
+
+    @if (loading()) {
+      <p class="muted">Učitavanje...</p>
+    }
+
+    <label class="field">
+      <span>Naziv *</span>
+      <input type="text" formControlName="name" />
+      @if (hasError('name')) {
+        <small class="error">Naziv mesta je obavezan.</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>Adresa *</span>
+      <input type="text" formControlName="address" />
+      @if (hasError('address')) {
+        <small class="error">Adresa je obavezna.</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>Tip mesta *</span>
+      <select formControlName="type">
+        @for (type of types; track type) {
+          <option [value]="type">{{ typeLabels[type] }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Opis *</span>
+      <textarea formControlName="description" rows="5"></textarea>
+      @if (hasError('description')) {
+        <small class="error">Opis je obavezan.</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>Slika {{ isEdit() ? '(ostavite prazno da zadržite postojeću)' : '*' }}</span>
+      <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" (change)="onFileSelected($event)" />
+    </label>
+
+    @if (currentImageUrl()) {
+      <div class="current-image">
+        <span class="muted">Trenutna slika:</span>
+        <img [src]="currentImageUrl()!" alt="Trenutna slika mesta" />
+      </div>
+    }
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+        {{ submitting() ? 'Čuvanje...' : isEdit() ? 'Sačuvaj izmene' : 'Dodaj mesto' }}
+      </button>
+      <a class="btn btn-ghost" routerLink="/mesta">Otkaži</a>
+    </div>
+  </form>
+</section>

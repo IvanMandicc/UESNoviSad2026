@@ -1,0 +1,26 @@
+# Java / Maven
+backend/target/
+backend/logs/
+backend/uploads/
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# Lokalna podesavanja sa kredencijalima (ne ide u git)
+backend/src/main/resources/application-local.yml
+.env
+
+# Node / Angular
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS
+Thumbs.db
+.DS_Store

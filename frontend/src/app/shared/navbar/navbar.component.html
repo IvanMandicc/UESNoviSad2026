@@ -1,0 +1,23 @@
+<nav class="navbar">
+  <a class="brand" routerLink="/">Novi Sad</a>
+
+  <div class="links">
+    @if (isLoggedIn()) {
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Početna</a>
+      <a routerLink="/mesta" routerLinkActive="active">Mesta</a>
+      @if (isAdmin()) {
+        <a routerLink="/admin/zahtevi" routerLinkActive="active">Zahtevi za registraciju</a>
+      }
+    }
+  </div>
+
+  <div class="session">
+    @if (isLoggedIn()) {
+      <span>{{ user()?.firstName }} {{ user()?.lastName }}</span>
+      <button type="button" class="btn btn-ghost btn-sm" (click)="logout()">Odjavi se</button>
+    } @else {
+      <a class="btn btn-ghost btn-sm" routerLink="/login">Prijava</a>
+      <a class="btn btn-primary btn-sm" routerLink="/registracija">Registracija</a>
+    }
+  </div>
+</nav>

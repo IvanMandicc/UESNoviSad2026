@@ -1,0 +1,67 @@
+# Podrazumevana podesavanja. Prave vrednosti (lozinka baze, JWT tajna) drze se
+# u application-local.yml koji NE ide u git, ili u promenljivama okruzenja.
+spring:
+  application:
+    name: novisad
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/uesnovisad}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # U razvoju je 'update' dovoljan; za predaju preci na 'validate' + migracije.
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: ${JPA_SHOW_SQL:false}
+
+  jackson:
+    default-property-inclusion: non_null
+
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:5MB}
+      max-request-size: ${MAX_REQUEST_SIZE:10MB}
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+
+app:
+  jwt:
+    # Mora biti najmanje 32 karaktera (HMAC-SHA256).
+    secret: ${JWT_SECRET:promeni-ovaj-tajni-kljuc-u-produkciji-min-32-karaktera}
+    expiration-seconds: ${JWT_EXPIRATION_SECONDS:86400}
+    issuer: novisad-app
+
+  # [K1] Predefinisan administrator sistema.
+  admin:
+    email: ${ADMIN_EMAIL:admin@novisad.rs}
+    password: ${ADMIN_PASSWORD:Admin123!}
+    first-name: ${ADMIN_FIRST_NAME:Administrator}
+    last-name: ${ADMIN_LAST_NAME:Sistema}
+
+  # [K3] Skladiste slika. 'local' pise na fajl sistem; u UES delu dolazi 'minio'.
+  storage:
+    type: ${STORAGE_TYPE:local}
+    location: ${STORAGE_LOCATION:uploads}
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+
+logging:
+  level:
+    root: INFO
+    rs.ftn.uns.novisad: ${LOG_LEVEL:DEBUG}
+    org.springframework.security: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"
+  file:
+    name: ${LOG_FILE:logs/novisad.log}

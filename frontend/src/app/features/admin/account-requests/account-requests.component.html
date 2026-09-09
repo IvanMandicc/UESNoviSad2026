@@ -1,0 +1,92 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Zahtevi za registraciju</h1>
+      <p class="subtitle">Prihvatite ili odbijte pristigle zahteve novih korisnika.</p>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn btn-ghost" (click)="toggleShowAll()">
+        {{ showAll() ? 'Prikaži samo na čekanju' : 'Prikaži sve zahteve' }}
+      </button>
+      <button type="button" class="btn btn-ghost" (click)="load()" [disabled]="loading()">Osveži</button>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
+  }
+  @if (infoMessage()) {
+    <div class="alert alert-success" role="status">{{ infoMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="muted">Učitavanje...</p>
+  } @else if (requests().length === 0) {
+    <div class="card empty">
+      {{ showAll() ? 'Nema nijednog zahteva.' : 'Trenutno nema zahteva na čekanju.' }}
+    </div>
+  } @else {
+    <div class="table-wrapper card">
+      <table>
+        <thead>
+          <tr>
+            <th>Korisnik</th>
+            <th>Email</th>
+            <th>Grad</th>
+            <th>Telefon</th>
+            <th>Poslat</th>
+            <th>Status</th>
+            <th class="right">Akcije</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (request of requests(); track request.id) {
+            <tr>
+              <td>{{ request.firstName }} {{ request.lastName }}</td>
+              <td>{{ request.email }}</td>
+              <td>{{ request.city || '—' }}</td>
+              <td>{{ request.phone || '—' }}</td>
+              <td>{{ request.createdAt | date: 'dd.MM.yyyy. HH:mm' }}</td>
+              <td>
+                <span class="badge badge-{{ request.status.toLowerCase() }}">{{ statusLabel(request) }}</span>
+                @if (request.status === 'REJECTED' && request.rejectionReason) {
+                  <small class="muted block">{{ request.rejectionReason }}</small>
+                }
+              </td>
+              <td class="right">
+                @if (request.status === 'PENDING') {
+                  <button type="button" class="btn btn-primary btn-sm"
+                          [disabled]="busyId() === request.id"
+                          (click)="approve(request)">Prihvati</button>
+                  <button type="button" class="btn btn-danger btn-sm"
+                          [disabled]="busyId() === request.id"
+                          (click)="startReject(request)">Odbij</button>
+                } @else {
+                  <span class="muted">Obrađen</span>
+                }
+              </td>
+            </tr>
+
+            @if (rejectingId() === request.id) {
+              <tr class="reject-row">
+                <td colspan="7">
+                  <label class="field">
+                    <span>Razlog odbijanja (opciono)</span>
+                    <input type="text" [(ngModel)]="rejectionReason" maxlength="500"
+                           placeholder="npr. Nepotpuni podaci" />
+                  </label>
+                  <div class="actions">
+                    <button type="button" class="btn btn-danger btn-sm"
+                            [disabled]="busyId() === request.id"
+                            (click)="confirmReject(request)">Potvrdi odbijanje</button>
+                    <button type="button" class="btn btn-ghost btn-sm" (click)="cancelReject()">Otkaži</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

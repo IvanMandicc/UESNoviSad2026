@@ -1,0 +1,81 @@
+<div class="auth-page">
+  @if (submitted()) {
+    <div class="card auth-card">
+      <h1>Zahtev je poslat</h1>
+      <div class="alert alert-success" role="status">
+        Vaš zahtev za registraciju je uspešno poslat. Administrator sistema će ga pregledati,
+        a nakon odobrenja moći ćete da se prijavite.
+      </div>
+      <a class="btn btn-primary" routerLink="/login">Nazad na prijavu</a>
+    </div>
+  } @else {
+    <form class="card auth-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <h1>Zahtev za registraciju</h1>
+      <p class="subtitle">Popunite podatke — nalog se aktivira nakon odobrenja administratora.</p>
+
+      @if (errorMessage()) {
+        <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
+      }
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Ime *</span>
+          <input type="text" formControlName="firstName" autocomplete="given-name" />
+          @if (hasError('firstName')) {
+            <small class="error">Ime je obavezno.</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Prezime *</span>
+          <input type="text" formControlName="lastName" autocomplete="family-name" />
+          @if (hasError('lastName')) {
+            <small class="error">Prezime je obavezno.</small>
+          }
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Email *</span>
+        <input type="email" formControlName="email" autocomplete="email" placeholder="ime@primer.rs" />
+        @if (hasError('email')) {
+          <small class="error">Unesite ispravnu email adresu.</small>
+        }
+      </label>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Grad</span>
+          <input type="text" formControlName="city" autocomplete="address-level2" />
+        </label>
+
+        <label class="field">
+          <span>Telefon</span>
+          <input type="tel" formControlName="phone" autocomplete="tel" />
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Lozinka *</span>
+        <input type="password" formControlName="password" autocomplete="new-password" />
+        @if (hasError('password')) {
+          <small class="error">Lozinka mora imati najmanje 8 karaktera.</small>
+        }
+      </label>
+
+      <label class="field">
+        <span>Potvrda lozinke *</span>
+        <input type="password" formControlName="confirmPassword" autocomplete="new-password" />
+        @if (passwordMismatch) {
+          <small class="error">Lozinke se ne poklapaju.</small>
+        }
+      </label>
+
+      <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+        {{ submitting() ? 'Slanje...' : 'Pošalji zahtev' }}
+      </button>
+
+      <p class="foot">Već imate nalog? <a routerLink="/login">Prijavite se</a></p>
+    </form>
+  }
+</div>

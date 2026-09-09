@@ -1,0 +1,18 @@
+# Kopiraj ovaj fajl u `application-local.yml` (isti folder) i upisi svoje
+# vrednosti. `application-local.yml` je u .gitignore-u, pa lozinka ne ide u git.
+#
+# Pokretanje sa ovim profilom:
+#   mvnw spring-boot:run "-Dspring-boot.run.profiles=local"
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/uesnovisad
+    username: postgres
+    password: TVOJA_LOZINKA_OVDE
+
+app:
+  jwt:
+    secret: promeni-ovaj-tajni-kljuc-minimum-32-karaktera
+  admin:
+    email: admin@novisad.rs
+    password: Admin123!
