@@ -275,8 +275,12 @@ frontend/src/app/
 - **`ddl-auto: update`** je pogodan za razvoj. Pred predaju preći na `validate` uz migracije.
 - **Sopstveni analyzer** (`elasticsearch/location-settings.json`) preslikava ćirilicu u
   latinicu i uklanja dijakritike pre indeksiranja i pre izvršavanja upita, pa `студио`,
-  `Studio` i `STUDIO` daju iste tokene. Ugrađeni Serbian Analyzer to ne radi, zbog čega
-  specifikacija i traži sopstvenu konfiguraciju.
+  `Studio` i `STUDIO` daju iste tokene. Ugrađeni Serbian Analyzer takođe preslikava
+  ćirilicu u latinicu (kroz `serbian_normalization`), ali koristi Serbian Light Stemmer,
+  koji je previše agresivan za nazive i adrese: `Чачак` svodi na koren `cack` umesto na
+  `cacak`, `Студио` na `studi` umesto na `studio`. Zato je sopstvena konfiguracija
+  neophodna, kako specifikacija i traži — provereno u
+  `scripts/test-ues.ps1` (sekcija 3).
 - **`minimum_should_match` za more-like-this je `1`**, ne podrazumevanih `30%`. Mesto sa
   zakačenim PDF-om daje mnogo termina pa procentualni prag nikada nije bio ispunjen —
   testirano je 30%, 25%, 20%, 10%, 2 i 1. Kada baza naraste, prag treba podići.
