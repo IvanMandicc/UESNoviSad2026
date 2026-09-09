@@ -47,6 +47,9 @@ export interface Location {
   type: LocationType;
   description: string;
   imageUrl: string;
+  /** [UES] Adresa za preuzimanje PDF opisa; null kada mesto nema dokument. */
+  pdfUrl: string | null;
+  pdfFilename: string | null;
   /** [K3] Ukupna, srednja vrednost ocene mesta; null dok mesto nema ocena. */
   averageRating: number | null;
   reviewCount: number;

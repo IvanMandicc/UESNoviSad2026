@@ -113,5 +113,13 @@ export const routes: Routes = [
       import('./features/profile/profile.component').then((m) => m.ProfileComponent),
     title: 'Moj profil'
   },
+  {
+    // [S1] Napredna pretraga mesta kroz Elasticsearch.
+    path: 'pretraga',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/search/search.component').then((m) => m.SearchComponent),
+    title: 'Napredna pretraga'
+  },
   { path: '**', redirectTo: '' }
 ];

@@ -36,6 +36,9 @@ export class LocationFormComponent {
   readonly isEdit = signal(false);
 
   selectedFile: File | null = null;
+  /** [UES] Opcioni PDF sa opisom mesta u slobodnoj formi. */
+  selectedPdf: File | null = null;
+  readonly currentPdfName = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
@@ -64,6 +67,7 @@ export class LocationFormComponent {
           description: location.description
         });
         this.currentImageUrl.set(this.locationsService.imageUrl(location));
+        this.currentPdfName.set(location.pdfFilename);
         this.loading.set(false);
       },
       error: (error) => {
@@ -76,6 +80,11 @@ export class LocationFormComponent {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.selectedFile = input.files?.[0] ?? null;
+  }
+
+  onPdfSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.selectedPdf = input.files?.[0] ?? null;
   }
 
   submit(): void {
@@ -97,6 +106,9 @@ export class LocationFormComponent {
     payload.append('description', values.description);
     if (this.selectedFile) {
       payload.append('image', this.selectedFile);
+    }
+    if (this.selectedPdf) {
+      payload.append('pdf', this.selectedPdf);
     }
 
     this.submitting.set(true);

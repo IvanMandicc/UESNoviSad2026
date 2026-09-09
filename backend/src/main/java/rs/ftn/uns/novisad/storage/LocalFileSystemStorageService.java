@@ -34,9 +34,11 @@ public class LocalFileSystemStorageService implements StorageService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalFileSystemStorageService.class);
 
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp", "gif");
+    // PDF je dozvoljen zbog [UES] opisa mesta u slobodnoj formi.
+    private static final Set<String> ALLOWED_EXTENSIONS =
+            Set.of("jpg", "jpeg", "png", "webp", "gif", "pdf");
     private static final Set<String> ALLOWED_CONTENT_TYPES =
-            Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
+            Set.of("image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf");
 
     @Value("${app.storage.location}")
     private String storageLocation;
@@ -60,7 +62,7 @@ public class LocalFileSystemStorageService implements StorageService {
             throw ApiException.badRequest("Fajl je prazan.");
         }
         if (!ALLOWED_CONTENT_TYPES.contains(String.valueOf(file.getContentType()).toLowerCase(Locale.ROOT))) {
-            throw ApiException.badRequest("Dozvoljene su samo slike (JPG, PNG, WEBP ili GIF).");
+            throw ApiException.badRequest("Dozvoljene su samo slike (JPG, PNG, WEBP, GIF) i PDF dokumenti.");
         }
 
         String extension = extensionOf(file.getOriginalFilename());

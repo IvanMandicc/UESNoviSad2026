@@ -49,6 +49,19 @@
       <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" (change)="onFileSelected($event)" />
     </label>
 
+    <!-- [UES] PDF sa opisom mesta u slobodnoj formi; sadrzaj se indeksira za pretragu. -->
+    <label class="field">
+      <span>PDF sa opisom mesta (opciono)</span>
+      <input type="file" accept="application/pdf" (change)="onPdfSelected($event)" />
+      <small class="muted">
+        Tekst iz dokumenta se čita i indeksira, pa se mesto može pronaći i po sadržaju PDF-a.
+      </small>
+    </label>
+
+    @if (currentPdfName(); as pdfName) {
+      <p class="muted current-pdf">Trenutni dokument: <strong>{{ pdfName }}</strong></p>
+    }
+
     @if (currentImageUrl()) {
       <div class="current-image">
         <span class="muted">Trenutna slika:</span>

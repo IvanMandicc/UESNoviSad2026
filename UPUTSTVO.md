@@ -3,7 +3,8 @@
 Implementirano do sada: **K1** (zahtev za registraciju), **K2** (prijava i odjava), **A1**
 (obrada zahteva), **K3** (rukovanje mestima), **A2** (upravljanje menadžerima mesta) i
 **K4/M1** (rukovanje događajima), **K5** (utisci i ocene mesta), **K6** (pretraga i
-filtriranje), **K9** (promena lozinke) i **K10** (profil korisnika). Specifikacija celog projekta je u [README.md](README.md).
+filtriranje), **K9** (promena lozinke), **K10** (profil korisnika) i **UES deo** (Elasticsearch,
+MinIO, PDF full-text pretraga, **S1**). Specifikacija celog projekta je u [README.md](README.md).
 
 ## Tehnologije
 
@@ -13,6 +14,9 @@ filtriranje), **K9** (promena lozinke) i **K10** (profil korisnika). Specifikaci
 | Bezbednost| Spring Security 6 + JWT (jjwt 0.12.7), BCrypt      |
 | Baza      | PostgreSQL 17                                       |
 | Frontend  | Angular 19 (standalone komponente, signals)         |
+| Pretraga  | Elasticsearch 8.19.5 (sopstveni analyzer)           |
+| Fajlovi   | MinIO (slike i PDF dokumenti)                       |
+| PDF       | Apache PDFBox 3 (izvlačenje teksta)                 |
 | Testovi   | JUnit 5 + MockMvc nad in-memory H2                  |
 
 ## 1. Priprema baze
@@ -66,7 +70,37 @@ Testovi (ne traže pokrenut PostgreSQL, koriste H2):
 .\mvnw.cmd test
 ```
 
-## 4. Pokretanje frontend-a
+## 4. Pokretanje Elasticsearch-a i MinIO-a (UES deo)
+
+Oba servisa su instalirana u `C:\UES\tools` i pokreću se bez Dockera.
+
+**Terminal 3 — Elasticsearch** (`http://localhost:9200`):
+
+```powershell
+C:\UES\tools\start-elasticsearch.bat
+```
+
+**Terminal 4 — MinIO** (API `:9000`, konzola `http://localhost:9001`):
+
+```powershell
+C:\UES\tools\start-minio.bat
+```
+
+MinIO pristup: korisnik `novisad`, lozinka `novisad123`. Bucket `novisad` se pravi sam
+pri prvom pokretanju backend-a.
+
+> **Podešeno za razvoj:** u `elasticsearch.yml` je isključen bezbednosni sloj
+> (bez TLS-a i lozinke) i spušteni su pragovi zauzeća diska na apsolutne vrednosti
+> (2gb / 1gb / 500mb). Podrazumevani procentualni pragovi (85/90/95%) blokiraju
+> alokaciju shardova na skoro punom disku.
+
+Ako se indeks raziđe sa bazom, kao admin: **Pretraga → Ponovo indeksiraj**
+(ili `POST /api/search/reindex`).
+
+**Rad bez ES-a i MinIO-a:** postavi `STORAGE_TYPE=local` i `SEARCH_ENABLED=false` —
+aplikacija tada čuva fajlove na disk i preskače indeksiranje. Testovi tako i rade.
+
+## 5. Pokretanje frontend-a
 
 ```powershell
 cd frontend
@@ -75,7 +109,7 @@ npm start
 
 Aplikacija je na `http://localhost:4200`.
 
-## 5. Predefinisan administrator
+## 6. Predefinisan administrator
 
 Pri prvom pokretanju backend kreira administratora sistema:
 
@@ -84,7 +118,7 @@ Pri prvom pokretanju backend kreira administratora sistema:
 
 Menja se kroz `app.admin.*` u konfiguraciji (ili `ADMIN_EMAIL` / `ADMIN_PASSWORD`).
 
-## 6. Tok za demonstraciju
+## 7. Tok za demonstraciju
 
 1. `/registracija` — pošalji zahtev za registraciju **[K1]**
 2. Pokušaj prijave tim nalogom → `403` uz poruku da zahtev nije obrađen
@@ -134,6 +168,21 @@ Za K9 i K10:
 4. **Promena lozinke** — trenutna, pa dva puta nova **[K9]**
 5. Ispod: **Mesta kojima upravljam** i **Moji utisci** **[K10]**
 
+Za UES deo (S1):
+
+1. Kao admin: `/mesta` → izmeni mesto → dodaj **PDF sa opisom mesta**
+   (tekst se čita PDFBox-om i indeksira u Elasticsearch)
+2. `/pretraga` → pretraži po **nazivu**, **opisu** ili **opisu iz PDF-a**
+3. Probaj posebne oblike unosa:
+   - `"koncertna dvorana"` — tačna fraza (obrnut redosled ne vraća ništa)
+   - `akust*` — prefiks
+   - `~akustka` — toleriše grešku u kucanju
+4. Probaj **ćirilicu**: `студио` vraća isto što i `studio` i `STUDIO`
+5. Opsezi: broj utisaka i prosečna ocena po stavkama (od–do)
+6. **AND / OR** između popunjenih polja, **sortiranje po nazivu**
+7. U rezultatu: **dinamički sažetak** sa istaknutim pojmom, **Preuzmi PDF opis**
+   i **Slična mesta** (more-like-this)
+
 ## REST API
 
 | Metoda | Putanja                                       | Pristup | Zahtev |
@@ -173,6 +222,10 @@ Za K9 i K10:
 | POST   | `/api/users/me/image`                         | prijavljen | K10 |
 | GET    | `/api/users/{id}/image`                       | **javno** | K10  |
 | POST   | `/api/users/me/password`                      | prijavljen | K9  |
+| POST   | `/api/search/locations`                       | prijavljen | S1  |
+| GET    | `/api/search/locations/{id}/similar`          | prijavljen | S1  |
+| POST   | `/api/search/reindex`                         | ADMIN   | UES    |
+| GET    | `/api/locations/{id}/pdf`                     | **javno** | UES  |
 
 Autorizacija: `Authorization: Bearer <token>`. Token važi 24h (`app.jwt.expiration-seconds`).
 
@@ -186,7 +239,9 @@ backend/src/main/java/rs/ftn/uns/novisad/
   service/       AccountRequestService (K1/A1), AuthService (K2),
                  LocationService (K3), ManagerService (A2), EventService (K4/M1),
                  ReviewService (K5), UserProfileService (K9/K10), EmailService (A1/K9)
-  storage/       StorageService + LocalFileSystemStorageService (slike mesta)
+  storage/       StorageService + LocalFileSystemStorageService + MinioStorageService
+  search/        LocationDocument, LocationIndexService, LocationSearchService,
+                 SearchQueryParser, CyrillicTransliterator, PdfTextExtractor [UES]
   security/      JwtService, JwtAuthenticationFilter, UserDetailsService, 401/403 handleri
   config/        SecurityConfig, CorsConfig, AdminSeeder
   web/           REST kontroleri
@@ -198,7 +253,8 @@ frontend/src/app/
   features/      auth (login, register), admin (zahtevi), locations (lista,
                  stranica mesta, forma), events (stranica događaja, forma),
                  events/list (stranica događaja [K6]), reviews (forma za utisak),
-                 profile (podaci, slika, lozinka, utisci [K9]/[K10]), home
+                 profile (podaci, slika, lozinka, utisci [K9]/[K10]),
+                 search (napredna pretraga [S1]), home
   shared/        navbar
 ```
 
@@ -217,7 +273,15 @@ frontend/src/app/
   prvo mesto, a vraća se na `USER` kada mu se ukloni poslednje. Administrator ne može biti
   menadžer mesta.
 - **`ddl-auto: update`** je pogodan za razvoj. Pred predaju preći na `validate` uz migracije.
-- **UES deo** (Elasticsearch, MinIO, PDF full-text pretraga, S1) nije započet.
+- **Sopstveni analyzer** (`elasticsearch/location-settings.json`) preslikava ćirilicu u
+  latinicu i uklanja dijakritike pre indeksiranja i pre izvršavanja upita, pa `студио`,
+  `Studio` i `STUDIO` daju iste tokene. Ugrađeni Serbian Analyzer to ne radi, zbog čega
+  specifikacija i traži sopstvenu konfiguraciju.
+- **`minimum_should_match` za more-like-this je `1`**, ne podrazumevanih `30%`. Mesto sa
+  zakačenim PDF-om daje mnogo termina pa procentualni prag nikada nije bio ispunjen —
+  testirano je 30%, 25%, 20%, 10%, 2 i 1. Kada baza naraste, prag treba podići.
+- **Elasticsearch nije izvor istine** — relaciona baza jeste. Greška pri indeksiranju se
+  beleži u log, ali ne obara poslovnu operaciju; indeks se popravlja preko `reindex`.
 - **Slike mesta** se čuvaju u folderu `backend/uploads/` iza interfejsa `StorageService`.
   Kada dođe UES deo, dodaje se `MinioStorageService` i menja `app.storage.type` — ostatak
   koda ostaje netaknut.

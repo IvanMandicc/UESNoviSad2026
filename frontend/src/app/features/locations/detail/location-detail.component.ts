@@ -143,6 +143,11 @@ export class LocationDetailComponent {
     return this.typeLabels[type] ?? type;
   }
 
+  /** [UES] Puna adresa za preuzimanje PDF-a; <a> ne prolazi kroz interceptor. */
+  pdfUrl(location: Location): string | null {
+    return location.pdfUrl ? this.locationsService.absoluteUrl(location.pdfUrl) : null;
+  }
+
   startEditingAttributes(): void {
     this.editingAttributes.set(true);
     this.clearMessages();

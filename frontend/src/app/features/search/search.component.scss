@@ -1,0 +1,213 @@
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.hint {
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  background: var(--surface-alt);
+  border-radius: 8px;
+}
+
+.hint ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  line-height: 1.7;
+}
+
+.hint code {
+  padding: 0.1rem 0.3rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 1rem;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
+}
+
+.operator-field {
+  max-width: 22rem;
+}
+
+.section-title {
+  margin: 1rem 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+/* Opsezi: naziv stavke pa dva uska polja u istom redu */
+.range-row {
+  display: grid;
+  grid-template-columns: 10rem 7rem 7rem;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.range-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.range-row input {
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+
+.range-row input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(47, 91, 215, 0.15);
+}
+
+.sort-row {
+  margin-top: 1.25rem;
+  max-width: 28rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.form-actions .btn-primary {
+  width: auto;
+}
+
+.results-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 1.75rem 0 1rem;
+}
+
+.results-header h2 {
+  margin: 0;
+}
+
+.result-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result-list li + li {
+  margin-top: 1rem;
+}
+
+.result {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: 1.25rem;
+  padding: 1.25rem;
+}
+
+.result img {
+  width: 9rem;
+  height: 7rem;
+  object-fit: cover;
+  background: var(--surface-alt);
+  border-radius: 8px;
+}
+
+.result-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.result-name:hover {
+  color: var(--primary);
+}
+
+.description {
+  margin: 0.35rem 0;
+}
+
+.meta {
+  margin: 0 0 0.3rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+/* Dinamicki sazetak; <mark> dolazi iz Elasticsearch highlighter-a */
+.highlights {
+  margin: 0.6rem 0;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.8125rem;
+  background: var(--surface-alt);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 6px 6px 0;
+}
+
+.highlights p {
+  margin: 0 0 0.3rem;
+}
+
+.highlights p:last-child {
+  margin-bottom: 0;
+}
+
+.highlights mark {
+  padding: 0 0.15rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: #dbe5ff;
+  border-radius: 3px;
+}
+
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+}
+
+@media (max-width: 48rem) {
+  .grid-3,
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .result {
+    grid-template-columns: 1fr;
+  }
+
+  .result img {
+    width: 100%;
+  }
+
+  .range-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .range-label {
+    grid-column: 1 / -1;
+  }
+}

@@ -48,12 +48,12 @@
     </label>
 
     @if (priceFilter === 'PAID') {
-      <label class="field">
+      <label class="field narrow">
         <span>Cena od</span>
         <input type="number" name="minPrice" [(ngModel)]="minPrice" min="0" />
       </label>
 
-      <label class="field">
+      <label class="field narrow">
         <span>Cena do</span>
         <input type="number" name="maxPrice" [(ngModel)]="maxPrice" min="0" />
       </label>

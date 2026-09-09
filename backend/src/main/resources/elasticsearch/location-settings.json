@@ -1,0 +1,93 @@
+{
+  "index": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "analysis": {
+    "char_filter": {
+      "cyrillic_to_latin": {
+        "type": "mapping",
+        "mappings": [
+          "А=>A", "а=>a",
+          "Б=>B", "б=>b",
+          "В=>V", "в=>v",
+          "Г=>G", "г=>g",
+          "Д=>D", "д=>d",
+          "Ђ=>dj", "ђ=>dj",
+          "Е=>E", "е=>e",
+          "Ж=>Z", "ж=>z",
+          "З=>Z", "з=>z",
+          "И=>I", "и=>i",
+          "Ј=>J", "ј=>j",
+          "К=>K", "к=>k",
+          "Л=>L", "л=>l",
+          "Љ=>lj", "љ=>lj",
+          "М=>M", "м=>m",
+          "Н=>N", "н=>n",
+          "Њ=>nj", "њ=>nj",
+          "О=>O", "о=>o",
+          "П=>P", "п=>p",
+          "Р=>R", "р=>r",
+          "С=>S", "с=>s",
+          "Т=>T", "т=>t",
+          "Ћ=>c", "ћ=>c",
+          "У=>U", "у=>u",
+          "Ф=>F", "ф=>f",
+          "Х=>H", "х=>h",
+          "Ц=>C", "ц=>c",
+          "Ч=>C", "ч=>c",
+          "Џ=>dz", "џ=>dz",
+          "Ш=>S", "ш=>s"
+        ]
+      },
+      "latin_diacritics": {
+        "type": "mapping",
+        "mappings": [
+          "Č=>C", "č=>c",
+          "Ć=>C", "ć=>c",
+          "Ž=>Z", "ž=>z",
+          "Š=>S", "š=>s",
+          "Đ=>dj", "đ=>dj",
+          "Dž=>dz", "dž=>dz", "DŽ=>dz"
+        ]
+      }
+    },
+    "filter": {
+      "serbian_stop": {
+        "type": "stop",
+        "stopwords": [
+          "i", "a", "ali", "ili", "pa", "te", "da", "je", "su", "sam", "si",
+          "smo", "ste", "bi", "bio", "bila", "bilo", "se", "na", "u", "za",
+          "od", "do", "sa", "po", "iz", "o", "kod", "pre", "posle", "kao",
+          "sto", "koji", "koja", "koje", "ovaj", "ova", "ovo", "taj", "ta", "to"
+        ]
+      },
+      "serbian_edge_ngram": {
+        "type": "edge_ngram",
+        "min_gram": 3,
+        "max_gram": 20
+      }
+    },
+    "analyzer": {
+      "serbian_custom": {
+        "type": "custom",
+        "char_filter": ["cyrillic_to_latin", "latin_diacritics"],
+        "tokenizer": "standard",
+        "filter": ["lowercase", "serbian_stop", "asciifolding"]
+      },
+      "serbian_sort": {
+        "type": "custom",
+        "char_filter": ["cyrillic_to_latin", "latin_diacritics"],
+        "tokenizer": "keyword",
+        "filter": ["lowercase", "asciifolding"]
+      }
+    },
+    "normalizer": {
+      "serbian_keyword": {
+        "type": "custom",
+        "char_filter": ["cyrillic_to_latin", "latin_diacritics"],
+        "filter": ["lowercase", "asciifolding"]
+      }
+    }
+  }
+}

@@ -39,6 +39,10 @@
         <p class="description">{{ loc.description }}</p>
 
         <div class="hero-actions">
+          <!-- [UES] Preuzimanje PDF opisa mesta. -->
+          @if (pdfUrl(loc); as url) {
+            <a class="btn btn-ghost btn-sm" [href]="url" target="_blank" rel="noopener">Preuzmi PDF opis</a>
+          }
           @if (canEditAttributes() && !editingAttributes()) {
             <button type="button" class="btn btn-ghost btn-sm" (click)="startEditingAttributes()">
               Izmeni atribute

@@ -19,6 +19,9 @@ public record LocationDto(
         String type,
         String description,
         String imageUrl,
+        /** [UES] Adresa za preuzimanje PDF opisa; null kada mesto nema dokument. */
+        String pdfUrl,
+        String pdfFilename,
         Double averageRating,
         Long reviewCount,
         Map<String, Double> averageByCategory,
@@ -36,6 +39,8 @@ public record LocationDto(
                 location.getType().name(),
                 location.getDescription(),
                 imageUrl(location),
+                pdfUrl(location),
+                location.getPdfFilename(),
                 averageRating,
                 reviewCount == null ? 0L : reviewCount,
                 null,
@@ -58,6 +63,8 @@ public record LocationDto(
                 location.getType().name(),
                 location.getDescription(),
                 imageUrl(location),
+                pdfUrl(location),
+                location.getPdfFilename(),
                 averageRating,
                 reviewCount,
                 averageByCategory,
@@ -69,5 +76,9 @@ public record LocationDto(
 
     private static String imageUrl(Location location) {
         return "/api/locations/" + location.getId() + "/image";
+    }
+
+    private static String pdfUrl(Location location) {
+        return location.getPdfKey() == null ? null : "/api/locations/" + location.getId() + "/pdf";
     }
 }

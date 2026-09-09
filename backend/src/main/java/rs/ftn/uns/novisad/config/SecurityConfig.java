@@ -79,6 +79,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/events/*/image").permitAll()
                         // [K10] Slika profila, iz istog razloga.
                         .requestMatchers(HttpMethod.GET, "/api/users/*/image").permitAll()
+                        // [UES] Preuzimanje PDF opisa mesta.
+                        .requestMatchers(HttpMethod.GET, "/api/locations/*/pdf").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         // A1 - obrada zahteva

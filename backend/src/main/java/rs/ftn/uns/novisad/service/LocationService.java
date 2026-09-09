@@ -16,6 +16,8 @@ import rs.ftn.uns.novisad.repository.LocationRepository;
 import rs.ftn.uns.novisad.repository.LocationSpecifications;
 import rs.ftn.uns.novisad.repository.ManagesRepository;
 import rs.ftn.uns.novisad.repository.UserRepository;
+import rs.ftn.uns.novisad.search.LocationIndexService;
+import rs.ftn.uns.novisad.search.PdfTextExtractor;
 import rs.ftn.uns.novisad.storage.StorageService;
 
 import java.time.Instant;
@@ -32,20 +34,27 @@ public class LocationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocationService.class);
     private static final String IMAGE_FOLDER = "locations";
+    private static final String PDF_FOLDER = "locations/pdf";
 
     private final LocationRepository locationRepository;
     private final ManagesRepository managesRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final LocationIndexService indexService;
+    private final PdfTextExtractor pdfTextExtractor;
 
     public LocationService(LocationRepository locationRepository,
                            ManagesRepository managesRepository,
                            UserRepository userRepository,
-                           StorageService storageService) {
+                           StorageService storageService,
+                           LocationIndexService indexService,
+                           PdfTextExtractor pdfTextExtractor) {
         this.locationRepository = locationRepository;
         this.managesRepository = managesRepository;
         this.userRepository = userRepository;
         this.storageService = storageService;
+        this.indexService = indexService;
+        this.pdfTextExtractor = pdfTextExtractor;
     }
 
     @Transactional(readOnly = true)
@@ -90,7 +99,16 @@ public class LocationService {
                 .createdAt(Instant.now())
                 .build();
 
+        // [UES] PDF je opcion; sadrzaj se parsira i indeksira kao Text polje.
+        String pdfContent = null;
+        if (form.getPdf() != null && !form.getPdf().isEmpty()) {
+            pdfContent = pdfTextExtractor.extract(form.getPdf());
+            location.setPdfKey(storageService.store(form.getPdf(), PDF_FOLDER));
+            location.setPdfFilename(form.getPdf().getOriginalFilename());
+        }
+
         Location saved = locationRepository.save(location);
+        indexService.index(saved, pdfContent, saved.getPdfKey());
         log.info("Kreirano mesto [id={}, naziv={}]", saved.getId(), saved.getName());
         return saved;
     }
@@ -117,7 +135,18 @@ public class LocationService {
             storageService.delete(previousKey);
         }
 
+        // [UES] Nov PDF zamenjuje stari; bez njega ostaje postojeci dokument.
+        String pdfContent = null;
+        if (form.getPdf() != null && !form.getPdf().isEmpty()) {
+            pdfContent = pdfTextExtractor.extract(form.getPdf());
+            String previousPdfKey = location.getPdfKey();
+            location.setPdfKey(storageService.store(form.getPdf(), PDF_FOLDER));
+            location.setPdfFilename(form.getPdf().getOriginalFilename());
+            storageService.delete(previousPdfKey);
+        }
+
         Location saved = locationRepository.save(location);
+        indexService.index(saved, pdfContent, saved.getPdfKey());
         log.info("Azurirano mesto [id={}, naziv={}]", saved.getId(), saved.getName());
         return saved;
     }
@@ -140,6 +169,7 @@ public class LocationService {
         location.setDescription(dto.description().trim());
 
         Location saved = locationRepository.save(location);
+        indexService.index(saved);
         log.info("Menadzer/admin azurirao atribute mesta [id={}, korisnik={}]", id, actingUserEmail);
         return saved;
     }
@@ -153,6 +183,7 @@ public class LocationService {
         Location location = findById(id);
         location.setActive(false);
         locationRepository.save(location);
+        indexService.remove(id);
         log.info("Mesto logicki uklonjeno [id={}, naziv={}]", id, location.getName());
     }
 

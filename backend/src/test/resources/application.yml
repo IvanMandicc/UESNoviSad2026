@@ -25,6 +25,10 @@ app:
     enabled: false
     from: noreply@test.rs
 
+  # Testovi ne diraju Elasticsearch - indeksiranje se preskace.
+  search:
+    enabled: false
+
   storage:
     type: local
     location: target/test-uploads

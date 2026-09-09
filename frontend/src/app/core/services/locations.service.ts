@@ -50,7 +50,15 @@ export class LocationsService {
    * u punu adresu jer <img> tag ne prolazi kroz Angular interceptor.
    */
   imageUrl(location: Location): string {
-    const origin = environment.apiUrl.replace(/\/api\/?$/, '');
-    return `${origin}${location.imageUrl}`;
+    return `${this.origin()}${location.imageUrl}`;
+  }
+
+  /** [UES] Puna adresa za bilo koju putanju sa backend-a (npr. preuzimanje PDF-a). */
+  absoluteUrl(path: string): string {
+    return `${this.origin()}${path}`;
+  }
+
+  private origin(): string {
+    return environment.apiUrl.replace(/\/api\/?$/, '');
   }
 }

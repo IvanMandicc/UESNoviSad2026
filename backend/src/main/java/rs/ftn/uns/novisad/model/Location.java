@@ -46,6 +46,17 @@ public class Location {
     private String imageKey;
 
     /**
+     * [UES] Kljuc PDF dokumenta sa opisom mesta u slobodnoj formi.
+     * Null dok mesto nema zakacen dokument.
+     */
+    @Column(name = "pdf_key", length = 300)
+    private String pdfKey;
+
+    /** [UES] Originalno ime PDF fajla, za preuzimanje. */
+    @Column(name = "pdf_filename", length = 300)
+    private String pdfFilename;
+
+    /**
      * Logicko brisanje. Vecinu informacionih sistema karakterise neogranicen
      * period cuvanja podataka, pa se mesto ne brise fizicki.
      */

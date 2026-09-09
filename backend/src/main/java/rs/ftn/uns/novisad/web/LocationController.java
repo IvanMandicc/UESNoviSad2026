@@ -3,6 +3,7 @@ package rs.ftn.uns.novisad.web;
 import jakarta.validation.Valid;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,6 +13,7 @@ import rs.ftn.uns.novisad.dto.LocationAttributesDto;
 import rs.ftn.uns.novisad.dto.LocationDto;
 import rs.ftn.uns.novisad.dto.LocationFormDto;
 import rs.ftn.uns.novisad.dto.ManagerDto;
+import rs.ftn.uns.novisad.exception.ApiException;
 import rs.ftn.uns.novisad.model.Location;
 import rs.ftn.uns.novisad.model.LocationType;
 import rs.ftn.uns.novisad.service.LocationService;
@@ -82,6 +84,28 @@ public class LocationController {
                 .contentType(contentType != null
                         ? MediaType.parseMediaType(contentType)
                         : MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
+    /**
+     * [UES] Preuzimanje PDF dokumenta sa opisom mesta.
+     * Javno dostupno, kao i slika, da bi link za preuzimanje radio direktno.
+     */
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<Resource> pdf(@PathVariable Long id) {
+        Location location = locationService.findById(id);
+        if (location.getPdfKey() == null) {
+            throw ApiException.notFound("Mesto nema zakacen PDF dokument.");
+        }
+
+        Resource resource = storageService.load(location.getPdfKey());
+        String filename = location.getPdfFilename() == null
+                ? "opis-mesta.pdf"
+                : location.getPdfFilename();
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(resource);
     }
 

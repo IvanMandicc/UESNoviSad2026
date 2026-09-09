@@ -6,29 +6,57 @@
   justify-content: space-between;
 }
 
-/* [K6] Traka za filtriranje */
+/* [K6] Traka za filtriranje - sve u jednom redu na sirokom ekranu */
 .filters {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 0 1rem;
-  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
   margin-bottom: 1.5rem;
   padding: 1rem 1.25rem;
 }
 
 .filters .field {
-  margin-bottom: 0.75rem;
+  /* min-width: 0 dozvoljava poljima da se skupe umesto da guraju red u prelom */
+  flex: 1 1 8rem;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+/* Polja za cenu su brojevi, pa im treba manje prostora. */
+.filters .field.narrow {
+  flex: 0 1 6rem;
 }
 
 .filter-actions {
   display: flex;
-  flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  flex: 0 0 auto;
 }
 
+.filter-actions .btn,
 .filter-actions .btn-primary {
   width: auto;
+  white-space: nowrap;
+}
+
+/* Na sirokom ekranu se traka ne prelama ni kada se pojave polja za cenu. */
+@media (min-width: 64rem) {
+  .filters {
+    flex-wrap: nowrap;
+  }
+}
+
+@media (max-width: 40rem) {
+  .filters .field,
+  .filters .field.narrow {
+    flex: 1 1 100%;
+  }
+
+  .filter-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+  }
 }
 
 .event-grid {

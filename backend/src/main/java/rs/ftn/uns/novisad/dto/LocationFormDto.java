@@ -33,4 +33,10 @@ public class LocationFormDto {
 
     /** Obavezna pri kreiranju; pri izmeni je opciona (bez nje slika ostaje ista). */
     private MultipartFile image;
+
+    /**
+     * [UES] Opcioni PDF sa opisom mesta u slobodnoj formi.
+     * Sadrzaj se parsira i indeksira u Elasticsearch kao Text polje.
+     */
+    private MultipartFile pdf;
 }
