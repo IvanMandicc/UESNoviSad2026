@@ -156,6 +156,27 @@ class LocationAndManagerFlowTest {
     }
 
     @Test
+    @DisplayName("K3: stranica mesta sa dodeljenim menadzerom se ucitava")
+    void locationDetailsWithManagerLoads() throws Exception {
+        String adminToken = loginAndGetToken(ADMIN_EMAIL, ADMIN_PASSWORD);
+        long locationId = createLocation(adminToken, "Mesto sa menadzerom");
+
+        mockMvc.perform(post("/api/admin/locations/" + locationId + "/managers")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\": " + userId + "}"))
+                .andExpect(status().isCreated());
+
+        // Menadzer se ucitava lenjo, pa je mapiranje u DTO van transakcije
+        // ranije bacalo LazyInitializationException.
+        mockMvc.perform(get("/api/locations/" + locationId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.managers.length()").value(1))
+                .andExpect(jsonPath("$.managers[0].email").value(USER_EMAIL));
+    }
+
+    @Test
     @DisplayName("K3: menadzer azurira atribute svog mesta")
     void managerUpdatesOwnLocationAttributes() throws Exception {
         String adminToken = loginAndGetToken(ADMIN_EMAIL, ADMIN_PASSWORD);

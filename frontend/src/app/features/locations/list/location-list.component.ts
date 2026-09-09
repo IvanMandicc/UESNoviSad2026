@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -9,7 +10,7 @@ import { LocationsService } from '../../../core/services/locations.service';
 /** [K3] Pregled svih mesta. */
 @Component({
   selector: 'app-location-list',
-  imports: [RouterLink],
+  imports: [RouterLink, DecimalPipe],
   templateUrl: './location-list.component.html',
   styleUrl: './location-list.component.scss'
 })

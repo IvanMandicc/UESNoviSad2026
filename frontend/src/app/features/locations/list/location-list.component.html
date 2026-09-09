@@ -30,6 +30,15 @@
           <div class="location-body">
             <span class="badge badge-role">{{ typeLabel(location.type) }}</span>
             <h2>{{ location.name }}</h2>
+            <!-- [K3] Ukupna, srednja vrednost ocene mesta. -->
+            <p class="rating">
+              @if (location.averageRating !== null) {
+                <strong>{{ location.averageRating | number: '1.1-1' }}</strong> / 10
+                <span class="muted">({{ location.reviewCount }})</span>
+              } @else {
+                <span class="muted">Bez ocena</span>
+              }
+            </p>
             <p class="address">{{ location.address }}</p>
             <p class="description">{{ location.description }}</p>
           </div>

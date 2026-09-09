@@ -89,5 +89,13 @@ export const routes: Routes = [
       import('./features/events/detail/event-detail.component').then((m) => m.EventDetailComponent),
     title: 'Dogadjaj'
   },
+  {
+    // [K5] Ostavljanje utiska na mesto.
+    path: 'mesta/:id/utisak',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/reviews/form/review-form.component').then((m) => m.ReviewFormComponent),
+    title: 'Ostavi utisak'
+  },
   { path: '**', redirectTo: '' }
 ];

@@ -15,9 +15,11 @@ import rs.ftn.uns.novisad.dto.ManagerDto;
 import rs.ftn.uns.novisad.model.Location;
 import rs.ftn.uns.novisad.service.LocationService;
 import rs.ftn.uns.novisad.service.ManagerService;
+import rs.ftn.uns.novisad.service.ReviewService;
 import rs.ftn.uns.novisad.storage.StorageService;
 
 import java.util.List;
+import java.util.Map;
 
 /** [K3] Rukovanje mestima. */
 @RestController
@@ -26,27 +28,43 @@ public class LocationController {
 
     private final LocationService locationService;
     private final ManagerService managerService;
+    private final ReviewService reviewService;
     private final StorageService storageService;
 
     public LocationController(LocationService locationService,
                               ManagerService managerService,
+                              ReviewService reviewService,
                               StorageService storageService) {
         this.locationService = locationService;
         this.managerService = managerService;
+        this.reviewService = reviewService;
         this.storageService = storageService;
     }
 
     @GetMapping
     public ResponseEntity<List<LocationDto>> list() {
-        return ResponseEntity.ok(locationService.findAll().stream().map(LocationDto::summary).toList());
+        // [K3] Prosecne ocene za sva mesta jednim upitom, umesto upita po mestu.
+        Map<Long, Double> averages = reviewService.findAverageRatingForAllLocations();
+        Map<Long, Long> counts = reviewService.countReviewsForAllLocations();
+
+        List<LocationDto> locations = locationService.findAll().stream()
+                .map(location -> LocationDto.summary(
+                        location, averages.get(location.getId()), counts.get(location.getId())))
+                .toList();
+        return ResponseEntity.ok(locations);
     }
 
-    /** Stranica mesta. Predstojeci dogadjaji [K4] i prosecna ocena [K5] dolaze kasnije. */
+    /** Stranica mesta: podaci, menadzeri i ukupna srednja ocena [K3]/[K5]. */
     @GetMapping("/{id}")
     public ResponseEntity<LocationDto> details(@PathVariable Long id) {
         Location location = locationService.findById(id);
         List<ManagerDto> managers = managerService.findByLocation(id).stream().map(ManagerDto::from).toList();
-        return ResponseEntity.ok(LocationDto.details(location, managers));
+        return ResponseEntity.ok(LocationDto.details(
+                location,
+                managers,
+                reviewService.findAverageRating(id),
+                reviewService.countReviews(id),
+                reviewService.findAverageRatingByCategory(id)));
     }
 
     /** Slika mesta. Javno dostupna da bi <img> tag radio bez Authorization zaglavlja. */
@@ -68,7 +86,7 @@ public class LocationController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LocationDto> create(@Valid @ModelAttribute LocationFormDto form) {
         Location created = locationService.create(form);
-        return ResponseEntity.status(HttpStatus.CREATED).body(LocationDto.summary(created));
+        return ResponseEntity.status(HttpStatus.CREATED).body(summaryWithRating(created));
     }
 
     /** [K3] Izmena svih podataka mesta - jedino administrator sistema. */
@@ -76,7 +94,7 @@ public class LocationController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LocationDto> update(@PathVariable Long id,
                                               @Valid @ModelAttribute LocationFormDto form) {
-        return ResponseEntity.ok(LocationDto.summary(locationService.update(id, form)));
+        return ResponseEntity.ok(summaryWithRating(locationService.update(id, form)));
     }
 
     /**
@@ -90,7 +108,7 @@ public class LocationController {
                                                         @Valid @RequestBody LocationAttributesDto dto,
                                                         Authentication authentication) {
         Location updated = locationService.updateAttributes(id, dto, authentication.getName());
-        return ResponseEntity.ok(LocationDto.summary(updated));
+        return ResponseEntity.ok(summaryWithRating(updated));
     }
 
     /** [K3] Uklanjanje mesta - jedino administrator sistema (logicko brisanje). */
@@ -99,5 +117,11 @@ public class LocationController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         locationService.deactivate(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private LocationDto summaryWithRating(Location location) {
+        return LocationDto.summary(location,
+                reviewService.findAverageRating(location.getId()),
+                reviewService.countReviews(location.getId()));
     }
 }

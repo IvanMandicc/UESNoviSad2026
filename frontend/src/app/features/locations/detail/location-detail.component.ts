@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { User } from '../../../core/models/auth.models';
 import { EVENT_TYPE_LABELS, Event, EventType } from '../../../core/models/event.models';
+import { RATE_CATEGORIES, RateCategory, Review } from '../../../core/models/review.models';
 import {
   LOCATION_TYPE_LABELS,
   LOCATION_TYPES,
@@ -14,6 +15,7 @@ import {
 import { readApiError } from '../../../core/services/api-error.util';
 import { AuthService } from '../../../core/services/auth.service';
 import { EventsService } from '../../../core/services/events.service';
+import { ReviewsService } from '../../../core/services/reviews.service';
 import { LocationsService } from '../../../core/services/locations.service';
 import { ManagersService } from '../../../core/services/managers.service';
 
@@ -35,6 +37,7 @@ export class LocationDetailComponent {
   private readonly locationsService = inject(LocationsService);
   private readonly managersService = inject(ManagersService);
   private readonly eventsService = inject(EventsService);
+  private readonly reviewsService = inject(ReviewsService);
   private readonly authService = inject(AuthService);
 
   readonly types = LOCATION_TYPES;
@@ -53,6 +56,11 @@ export class LocationDetailComponent {
   readonly showPastEvents = signal(false);
   /** [K4] Da li prijavljeni korisnik sme da rukuje dogadjajima na ovom mestu. */
   readonly canManageEvents = signal(false);
+
+  /** [K5] Utisci ostavljeni na ovo mesto. */
+  readonly reviews = signal<Review[]>([]);
+  readonly reviewsLoading = signal(false);
+  readonly rateCategories = RATE_CATEGORIES;
 
   readonly candidates = signal<User[]>([]);
   readonly assigningUserId = signal<number | null>(null);
@@ -93,6 +101,7 @@ export class LocationDetailComponent {
         });
         this.loading.set(false);
         this.loadEvents(id);
+        this.loadReviews(id);
         this.eventsService.canManage(id).subscribe({
           next: (allowed) => this.canManageEvents.set(allowed),
           error: () => this.canManageEvents.set(false)
@@ -267,6 +276,26 @@ export class LocationDetailComponent {
 
   eventTypeLabel(type: EventType): string {
     return EVENT_TYPE_LABELS[type] ?? type;
+  }
+
+  /** [K5] Utisci na ovom mestu. */
+  loadReviews(locationId: number): void {
+    this.reviewsLoading.set(true);
+    this.reviewsService.byLocation(locationId).subscribe({
+      next: (reviews) => {
+        this.reviews.set(reviews);
+        this.reviewsLoading.set(false);
+      },
+      error: () => {
+        this.reviews.set([]);
+        this.reviewsLoading.set(false);
+      }
+    });
+  }
+
+  /** Ocena date stavke na utisku, ili null ako je korisnik nije ocenio. */
+  rateValue(review: Review, category: RateCategory): number | null {
+    return review.rates[category] ?? null;
   }
 
   private clearMessages(): void {

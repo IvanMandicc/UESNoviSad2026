@@ -1,0 +1,68 @@
+<section class="page form-page">
+  <form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h1>Ostavi utisak</h1>
+    @if (locationName()) {
+      <p class="subtitle">Mesto: <strong>{{ locationName() }}</strong></p>
+    }
+
+    @if (errorMessage()) {
+      <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
+    }
+
+    @if (loading()) {
+      <p class="muted">Učitavanje...</p>
+    } @else if (events().length === 0) {
+      <div class="alert alert-error">
+        Nema događaja na koje možete ostaviti utisak. Utisak se ostavlja samo na
+        <strong>redovan</strong> događaj koji se <strong>već održao</strong> na ovom mestu,
+        i to jednom po događaju.
+      </div>
+      <a class="btn btn-ghost" [routerLink]="['/mesta', locationId()]">Nazad na mesto</a>
+    } @else {
+      <label class="field">
+        <span>Događaj *</span>
+        <select formControlName="eventId">
+          <option [ngValue]="null">— izaberite događaj —</option>
+          @for (ev of events(); track ev.id) {
+            <option [ngValue]="ev.id">
+              {{ ev.name }} — {{ ev.date | date: 'dd.MM.yyyy. HH:mm' }}
+            </option>
+          }
+        </select>
+      </label>
+
+      <p class="scale-hint">
+        Ocenite na skali od 1 do 10. Nije neophodno oceniti svaku stavku —
+        ponovnim klikom na istu ocenu je poništavate.
+      </p>
+
+      @for (category of categories; track category.key) {
+        <div class="rate-row">
+          <span class="rate-label">{{ category.label }}</span>
+          <div class="scale">
+            @for (n of scale; track n) {
+              <button type="button" class="scale-btn"
+                      [class.selected]="rateOf(category.control) === n"
+                      (click)="setRate(category.control, n)">
+                {{ n }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <label class="field comment-field">
+        <span>Komentar (opciono)</span>
+        <textarea formControlName="comment" rows="4" maxlength="2000"
+                  placeholder="Podelite svoj utisak..."></textarea>
+      </label>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+          {{ submitting() ? 'Slanje...' : 'Objavi utisak' }}
+        </button>
+        <a class="btn btn-ghost" [routerLink]="['/mesta', locationId()]">Otkaži</a>
+      </div>
+    }
+  </form>
+</section>

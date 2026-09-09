@@ -64,3 +64,12 @@
   text-align: center;
   color: var(--muted);
 }
+
+.rating {
+  margin: 0 0 0.35rem;
+  font-size: 0.875rem;
+}
+
+.rating strong {
+  color: var(--primary);
+}

@@ -15,14 +15,25 @@
         <span class="badge badge-role">{{ typeLabel(loc.type) }}</span>
         <h1>{{ loc.name }}</h1>
 
-        <!-- [K5] Prosečna ocena mesta; popunjava se kada bude implementiran K5. -->
+        <!-- [K3] Ukupna, srednja vrednost ocene mesta. -->
         <p class="rating">
           @if (loc.averageRating !== null) {
-            <strong>{{ loc.averageRating }}</strong> / 10 ({{ loc.reviewCount }} utisaka)
+            <strong>{{ loc.averageRating | number: '1.1-1' }}</strong> / 10
+            <span class="muted">({{ loc.reviewCount }} {{ loc.reviewCount === 1 ? 'utisak' : 'utisaka' }})</span>
           } @else {
             <span class="muted">Još nema ocena</span>
           }
         </p>
+
+        @if (loc.averageByCategory) {
+          <ul class="category-averages">
+            @for (category of rateCategories; track category.key) {
+              @if (loc.averageByCategory[category.key]; as avg) {
+                <li><span class="muted">{{ category.label }}</span> <strong>{{ avg | number: '1.1-1' }}</strong></li>
+              }
+            }
+          </ul>
+        }
 
         <p class="address">{{ loc.address }}</p>
         <p class="description">{{ loc.description }}</p>
@@ -124,6 +135,60 @@
                   }
                 </span>
               </a>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <!-- [K5] Utisci ostavljeni na ovo mesto. -->
+    <div class="card">
+      <div class="section-header">
+        <h2>Utisci</h2>
+        <a class="btn btn-primary btn-sm" [routerLink]="['/mesta', loc.id, 'utisak']">Ostavi utisak</a>
+      </div>
+
+      @if (reviewsLoading()) {
+        <p class="muted">Učitavanje...</p>
+      } @else if (reviews().length === 0) {
+        <p class="muted">Još nema utisaka na ovom mestu.</p>
+      } @else {
+        <ul class="review-list">
+          @for (review of reviews(); track review.id) {
+            <li class="review">
+              <div class="review-head">
+                <div>
+                  <strong>{{ review.authorName }}</strong>
+                  @if (review.hidden) {
+                    <span class="badge badge-pending">Sakriven</span>
+                  }
+                  <small class="muted block">
+                    {{ review.eventName }} · {{ review.eventDate | date: 'dd.MM.yyyy.' }}
+                  </small>
+                  <!-- [K5] Broj održavanja u trenutku pisanja utiska. -->
+                  <small class="muted block">
+                    Događaj se do tada održao {{ review.timesHeldAtReview }}
+                    {{ review.timesHeldAtReview === 1 ? 'put' : 'puta' }}
+                  </small>
+                </div>
+                @if (review.averageRate !== null) {
+                  <span class="review-score">{{ review.averageRate | number: '1.1-1' }}</span>
+                }
+              </div>
+
+              <ul class="review-rates">
+                @for (category of rateCategories; track category.key) {
+                  @if (rateValue(review, category.key); as value) {
+                    <li><span class="muted">{{ category.label }}</span> <strong>{{ value }}</strong></li>
+                  }
+                }
+              </ul>
+
+              @if (review.comment) {
+                <p class="review-comment">{{ review.comment }}</p>
+              }
+
+              <small class="muted">{{ review.createdAt | date: 'dd.MM.yyyy. HH:mm' }}</small>
             </li>
           }
         </ul>

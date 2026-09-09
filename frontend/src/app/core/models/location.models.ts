@@ -1,3 +1,5 @@
+import { RateCategory } from './review.models';
+
 export type LocationType =
   | 'KLUB'
   | 'KAFIC'
@@ -45,9 +47,11 @@ export interface Location {
   type: LocationType;
   description: string;
   imageUrl: string;
-  /** [K5] Prosečna ocena — popunjava se kada bude implementiran K5. */
+  /** [K3] Ukupna, srednja vrednost ocene mesta; null dok mesto nema ocena. */
   averageRating: number | null;
   reviewCount: number;
+  /** Prosek po stavkama ocenjivanja; popunjen samo na stranici mesta. */
+  averageByCategory: Partial<Record<RateCategory, number>> | null;
   managers: LocationManager[];
   createdAt: string;
   updatedAt: string | null;

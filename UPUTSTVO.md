@@ -2,7 +2,7 @@
 
 Implementirano do sada: **K1** (zahtev za registraciju), **K2** (prijava i odjava), **A1**
 (obrada zahteva), **K3** (rukovanje mestima), **A2** (upravljanje menadžerima mesta) i
-**K4/M1** (rukovanje događajima). Specifikacija celog projekta je u [README.md](README.md).
+**K4/M1** (rukovanje događajima) i **K5** (utisci i ocene mesta). Specifikacija celog projekta je u [README.md](README.md).
 
 ## Tehnologije
 
@@ -109,6 +109,15 @@ Za K4 i M1 (kao menadžer mesta):
 4. Na stranici događaja: **Izmeni** / **Ukloni događaj** **[M1]**
 5. Za redovan događaj sa više pojava istog naziva prikazuje se **Održan do sada N puta** **[K5]**
 
+Za K5 (kao bilo koji prijavljen korisnik):
+
+1. Na stranici mesta → **Ostavi utisak** **[K5]**
+2. Bira se **redovan događaj koji se već održao** — samo takvi se nude
+3. Ocenjuju se stavke 1-10: nastup, zvuk i svetlo, prostor, ukupan utisak. Nije
+   neophodno oceniti svaku; ponovni klik na istu ocenu je poništava
+4. Komentar je opcion
+5. Nakon objave: srednja ocena mesta se osvežava na stranici mesta i u listi mesta **[K3]**
+
 ## REST API
 
 | Metoda | Putanja                                       | Pristup | Zahtev |
@@ -139,6 +148,10 @@ Za K4 i M1 (kao menadžer mesta):
 | GET    | `/api/events/{id}/image`                      | **javno** | K4   |
 | PUT    | `/api/events/{id}`                            | menadžer mesta ili ADMIN | K4 |
 | DELETE | `/api/events/{id}`                            | menadžer mesta ili ADMIN | K4 |
+| GET    | `/api/locations/{id}/reviews`                 | prijavljen | K5  |
+| POST   | `/api/locations/{id}/reviews`                 | prijavljen | K5  |
+| GET    | `/api/locations/{id}/reviewable-events`       | prijavljen | K5  |
+| GET    | `/api/reviews/{id}`                           | prijavljen | K5  |
 
 Autorizacija: `Authorization: Bearer <token>`. Token važi 24h (`app.jwt.expiration-seconds`).
 
@@ -146,11 +159,12 @@ Autorizacija: `Authorization: Bearer <token>`. Token važi 24h (`app.jwt.expirat
 
 ```
 backend/src/main/java/rs/ftn/uns/novisad/
-  model/         User, AccountRequest, Location, Manages, Event,
-                 Role, RequestStatus, LocationType, EventType
+  model/         User, AccountRequest, Location, Manages, Event, Review, Rate, Comment,
+                 Role, RequestStatus, LocationType, EventType, RateCategory
   repository/    Spring Data JPA repozitorijumi
   service/       AccountRequestService (K1/A1), AuthService (K2),
-                 LocationService (K3), ManagerService (A2), EventService (K4/M1)
+                 LocationService (K3), ManagerService (A2), EventService (K4/M1),
+                 ReviewService (K5)
   storage/       StorageService + LocalFileSystemStorageService (slike mesta)
   security/      JwtService, JwtAuthenticationFilter, UserDetailsService, 401/403 handleri
   config/        SecurityConfig, CorsConfig, AdminSeeder
@@ -161,7 +175,8 @@ backend/src/main/java/rs/ftn/uns/novisad/
 frontend/src/app/
   core/          modeli, servisi, JWT interceptor, guard-ovi
   features/      auth (login, register), admin (zahtevi), locations (lista,
-                 stranica mesta, forma), events (stranica događaja, forma), home
+                 stranica mesta, forma), events (stranica događaja, forma),
+                 reviews (forma za utisak), home
   shared/        navbar
 ```
 
@@ -177,7 +192,12 @@ frontend/src/app/
 - **Slike mesta** se čuvaju u folderu `backend/uploads/` iza interfejsa `StorageService`.
   Kada dođe UES deo, dodaje se `MinioStorageService` i menja `app.storage.type` — ostatak
   koda ostaje netaknut.
-- **Prosečna ocena mesta** na stranici mesta i dalje čeka K5.
+- **Srednja ocena mesta** je prosek svih datih ocena (svih stavki) na aktivnim utiscima.
+  Uklonjen utisak [M2] se ne računa, sakriven se i dalje računa — kako specifikacija traži.
+- **Jedan utisak po korisniku i događaju.** Specifikacija to ne kaže eksplicitno, ali
+  utisak se vezuje za konkretnu pojavu događaja, pa dupliranje nema smisla (vraća `409`).
+- **Nesaglasnost u specifikaciji:** K5 navodi 4 stavke ocenjivanja (zvuk i svetlo su
+  jedna), dok UES deo [S1] pominje 5 (zvuk i svetlo odvojeno). Implementirane su 4, po K5.
 - **Redovan događaj** se u bazi vodi kao više pojava sa istim nazivom na istom mestu i
   različitim datumima. Zato je "koliko se puta događaj održao" (K5) broj pojava tog
   naziva na tom mestu čiji je datum u prošlosti. Specifikacija ovo ne definiše

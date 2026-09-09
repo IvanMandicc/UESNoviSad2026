@@ -4,13 +4,13 @@ import rs.ftn.uns.novisad.model.Location;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
- * [K3] Prikaz mesta.
+ * [K3] Prikaz mesta, sa ukupnom srednjom vrednoscu ocene.
  * <p>
- * Polja {@code averageRating} i {@code upcomingEvents} pripadaju zahtevima K5 i K4
- * koji jos nisu implementirani, pa su za sada prazni. Drze se u odgovoru da se
- * ugovor prema frontend-u ne menja kada ti zahtevi budu gotovi.
+ * {@code averageRating} je null dok mesto nema nijednu ocenu. Prosek po stavkama
+ * ({@code averageByCategory}) se popunjava samo na stranici mesta.
  */
 public record LocationDto(
         Long id,
@@ -20,14 +20,15 @@ public record LocationDto(
         String description,
         String imageUrl,
         Double averageRating,
-        Integer reviewCount,
+        Long reviewCount,
+        Map<String, Double> averageByCategory,
         List<ManagerDto> managers,
         Instant createdAt,
         Instant updatedAt
 ) {
 
-    /** Kratak prikaz za listu mesta - bez menadzera. */
-    public static LocationDto summary(Location location) {
+    /** Kratak prikaz za listu mesta - bez menadzera i bez proseka po stavkama. */
+    public static LocationDto summary(Location location, Double averageRating, Long reviewCount) {
         return new LocationDto(
                 location.getId(),
                 location.getName(),
@@ -35,16 +36,21 @@ public record LocationDto(
                 location.getType().name(),
                 location.getDescription(),
                 imageUrl(location),
+                averageRating,
+                reviewCount == null ? 0L : reviewCount,
                 null,
-                0,
                 List.of(),
                 location.getCreatedAt(),
                 location.getUpdatedAt()
         );
     }
 
-    /** Detaljan prikaz za stranicu mesta - sa menadzerima. */
-    public static LocationDto details(Location location, List<ManagerDto> managers) {
+    /** Detaljan prikaz za stranicu mesta. */
+    public static LocationDto details(Location location,
+                                      List<ManagerDto> managers,
+                                      Double averageRating,
+                                      long reviewCount,
+                                      Map<String, Double> averageByCategory) {
         return new LocationDto(
                 location.getId(),
                 location.getName(),
@@ -52,8 +58,9 @@ public record LocationDto(
                 location.getType().name(),
                 location.getDescription(),
                 imageUrl(location),
-                null,
-                0,
+                averageRating,
+                reviewCount,
+                averageByCategory,
                 managers,
                 location.getCreatedAt(),
                 location.getUpdatedAt()

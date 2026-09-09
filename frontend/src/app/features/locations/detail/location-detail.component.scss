@@ -174,3 +174,59 @@
     grid-column: 2;
   }
 }
+
+/* [K3] Prosek po stavkama uz naziv mesta */
+.category-averages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+}
+
+/* [K5] Utisci */
+.review-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review + .review,
+.review-list li + li {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.review-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.review-score {
+  flex-shrink: 0;
+  padding: 0.2rem 0.6rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: #e8eeff;
+  border-radius: 999px;
+}
+
+.review-rates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+}
+
+.review-comment {
+  margin: 0.6rem 0 0.4rem;
+  white-space: pre-wrap;
+}
