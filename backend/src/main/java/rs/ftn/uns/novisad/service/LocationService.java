@@ -100,15 +100,14 @@ public class LocationService {
                 .build();
 
         // [UES] PDF je opcion; sadrzaj se parsira i indeksira kao Text polje.
-        String pdfContent = null;
         if (form.getPdf() != null && !form.getPdf().isEmpty()) {
-            pdfContent = pdfTextExtractor.extract(form.getPdf());
+            location.setPdfContent(pdfTextExtractor.extract(form.getPdf()));
             location.setPdfKey(storageService.store(form.getPdf(), PDF_FOLDER));
             location.setPdfFilename(form.getPdf().getOriginalFilename());
         }
 
         Location saved = locationRepository.save(location);
-        indexService.index(saved, pdfContent, saved.getPdfKey());
+        indexService.index(saved);
         log.info("Kreirano mesto [id={}, naziv={}]", saved.getId(), saved.getName());
         return saved;
     }
@@ -136,9 +135,8 @@ public class LocationService {
         }
 
         // [UES] Nov PDF zamenjuje stari; bez njega ostaje postojeci dokument.
-        String pdfContent = null;
         if (form.getPdf() != null && !form.getPdf().isEmpty()) {
-            pdfContent = pdfTextExtractor.extract(form.getPdf());
+            location.setPdfContent(pdfTextExtractor.extract(form.getPdf()));
             String previousPdfKey = location.getPdfKey();
             location.setPdfKey(storageService.store(form.getPdf(), PDF_FOLDER));
             location.setPdfFilename(form.getPdf().getOriginalFilename());
@@ -146,7 +144,7 @@ public class LocationService {
         }
 
         Location saved = locationRepository.save(location);
-        indexService.index(saved, pdfContent, saved.getPdfKey());
+        indexService.index(saved);
         log.info("Azurirano mesto [id={}, naziv={}]", saved.getId(), saved.getName());
         return saved;
     }

@@ -57,6 +57,13 @@ public class Location {
     private String pdfFilename;
 
     /**
+     * [UES] Tekst izvucen iz PDF-a. Cuva se i ovde, a ne samo u Elasticsearch-u,
+     * da bi ponovno indeksiranje moglo da ga vrati - indeks nije izvor istine.
+     */
+    @Column(name = "pdf_content", length = 1_000_000)
+    private String pdfContent;
+
+    /**
      * Logicko brisanje. Vecinu informacionih sistema karakterise neogranicen
      * period cuvanja podataka, pa se mesto ne brise fizicki.
      */

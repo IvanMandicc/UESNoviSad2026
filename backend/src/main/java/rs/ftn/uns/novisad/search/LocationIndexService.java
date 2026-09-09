@@ -44,22 +44,16 @@ public class LocationIndexService {
         this.reviewService = reviewService;
     }
 
-    /** Indeksira jedno mesto, cuvajuci vec izvucen tekst PDF-a ako nije prosledjen nov. */
+    /**
+     * Indeksira jedno mesto. Svi podaci se citaju iz relacione baze, ukljucujuci
+     * tekst izvucen iz PDF-a, pa ponovno indeksiranje ne gubi nista.
+     */
     @Transactional(readOnly = true)
-    public void index(Location location, String pdfContent, String pdfKey) {
+    public void index(Location location) {
         if (!enabled) {
             return;
         }
         try {
-            LocationDocument existing = operations.get(String.valueOf(location.getId()), LocationDocument.class);
-
-            String effectivePdfContent = pdfContent != null
-                    ? pdfContent
-                    : (existing == null ? null : existing.getPdfContent());
-            String effectivePdfKey = pdfKey != null
-                    ? pdfKey
-                    : (existing == null ? null : existing.getPdfKey());
-
             Map<String, Double> byCategory = reviewService.findAverageRatingByCategory(location.getId());
 
             LocationDocument document = LocationDocument.builder()
@@ -69,8 +63,8 @@ public class LocationIndexService {
                     .description(location.getDescription())
                     .address(location.getAddress())
                     .type(location.getType().name())
-                    .pdfContent(effectivePdfContent)
-                    .pdfKey(effectivePdfKey)
+                    .pdfContent(location.getPdfContent())
+                    .pdfKey(location.getPdfKey())
                     .imageKey(location.getImageKey())
                     .reviewCount((int) reviewService.countReviews(location.getId()))
                     .ratingAverage(reviewService.findAverageRating(location.getId()))
@@ -79,15 +73,11 @@ public class LocationIndexService {
 
             operations.save(document);
             log.info("[UES] Indeksirano mesto [id={}, naziv={}, pdf={}]",
-                    location.getId(), location.getName(), effectivePdfKey != null);
+                    location.getId(), location.getName(), location.getPdfKey() != null);
 
         } catch (Exception ex) {
             log.error("[UES] Neuspesno indeksiranje mesta [id={}]: {}", location.getId(), ex.getMessage());
         }
-    }
-
-    public void index(Location location) {
-        index(location, null, null);
     }
 
     /** Uklanja mesto iz indeksa - poziva se pri logickom brisanju. */
@@ -117,7 +107,7 @@ public class LocationIndexService {
         indexOps.createWithMapping();
 
         List<Location> locations = locationRepository.findByActiveTrueOrderByNameAsc();
-        locations.forEach(location -> index(location, null, null));
+        locations.forEach(this::index);
 
         log.info("[UES] Ponovo indeksirano {} mesta.", locations.size());
         return locations.size();

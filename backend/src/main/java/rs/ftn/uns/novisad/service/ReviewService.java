@@ -2,6 +2,7 @@ package rs.ftn.uns.novisad.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -9,6 +10,7 @@ import rs.ftn.uns.novisad.dto.CreateReviewDto;
 import rs.ftn.uns.novisad.exception.ApiException;
 import rs.ftn.uns.novisad.model.*;
 import rs.ftn.uns.novisad.repository.*;
+import rs.ftn.uns.novisad.search.ReviewsChangedEvent;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -34,17 +36,20 @@ public class ReviewService {
     private final LocationRepository locationRepository;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher events;
 
     public ReviewService(ReviewRepository reviewRepository,
                          CommentRepository commentRepository,
                          LocationRepository locationRepository,
                          EventRepository eventRepository,
-                         UserRepository userRepository) {
+                         UserRepository userRepository,
+                         ApplicationEventPublisher events) {
         this.reviewRepository = reviewRepository;
         this.commentRepository = commentRepository;
         this.locationRepository = locationRepository;
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
+        this.events = events;
     }
 
     /** Utisci na mestu. Sakriveni se prikazuju samo menadzeru mesta i administratoru [M2]. */
@@ -148,6 +153,9 @@ public class ReviewService {
 
         log.info("Ostavljen utisak [id={}, mesto={}, dogadjaj={}, korisnik={}, ocena stavki={}]",
                 saved.getId(), location.getName(), event.getName(), userEmail, values.size());
+
+        // [UES] Broj utisaka i prosecne ocene u indeksu vise ne odgovaraju bazi.
+        events.publishEvent(new ReviewsChangedEvent(location.getId()));
         return saved;
     }
 
