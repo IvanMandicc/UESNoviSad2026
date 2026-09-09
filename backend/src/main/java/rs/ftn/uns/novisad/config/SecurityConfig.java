@@ -75,6 +75,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/registration-requests").permitAll()
                         // [K3] Slika mesta je javna da bi <img> tag radio bez Authorization zaglavlja.
                         .requestMatchers(HttpMethod.GET, "/api/locations/*/image").permitAll()
+                        // [K4] Slika dogadjaja, iz istog razloga.
+                        .requestMatchers(HttpMethod.GET, "/api/events/*/image").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         // A1 - obrada zahteva

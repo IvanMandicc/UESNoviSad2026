@@ -1,9 +1,10 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { User } from '../../../core/models/auth.models';
+import { EVENT_TYPE_LABELS, Event, EventType } from '../../../core/models/event.models';
 import {
   LOCATION_TYPE_LABELS,
   LOCATION_TYPES,
@@ -12,6 +13,7 @@ import {
 } from '../../../core/models/location.models';
 import { readApiError } from '../../../core/services/api-error.util';
 import { AuthService } from '../../../core/services/auth.service';
+import { EventsService } from '../../../core/services/events.service';
 import { LocationsService } from '../../../core/services/locations.service';
 import { ManagersService } from '../../../core/services/managers.service';
 
@@ -22,7 +24,7 @@ import { ManagersService } from '../../../core/services/managers.service';
  */
 @Component({
   selector: 'app-location-detail',
-  imports: [ReactiveFormsModule, FormsModule, RouterLink, DatePipe],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink, DatePipe, DecimalPipe],
   templateUrl: './location-detail.component.html',
   styleUrl: './location-detail.component.scss'
 })
@@ -32,6 +34,7 @@ export class LocationDetailComponent {
   private readonly fb = inject(FormBuilder);
   private readonly locationsService = inject(LocationsService);
   private readonly managersService = inject(ManagersService);
+  private readonly eventsService = inject(EventsService);
   private readonly authService = inject(AuthService);
 
   readonly types = LOCATION_TYPES;
@@ -43,6 +46,13 @@ export class LocationDetailComponent {
   readonly infoMessage = signal<string | null>(null);
   readonly editingAttributes = signal(false);
   readonly savingAttributes = signal(false);
+
+  /** [K4] Predstojeci dogadjaji na ovom mestu. */
+  readonly events = signal<Event[]>([]);
+  readonly eventsLoading = signal(false);
+  readonly showPastEvents = signal(false);
+  /** [K4] Da li prijavljeni korisnik sme da rukuje dogadjajima na ovom mestu. */
+  readonly canManageEvents = signal(false);
 
   readonly candidates = signal<User[]>([]);
   readonly assigningUserId = signal<number | null>(null);
@@ -82,6 +92,11 @@ export class LocationDetailComponent {
           description: location.description
         });
         this.loading.set(false);
+        this.loadEvents(id);
+        this.eventsService.canManage(id).subscribe({
+          next: (allowed) => this.canManageEvents.set(allowed),
+          error: () => this.canManageEvents.set(false)
+        });
         if (this.isAdmin()) {
           this.loadCandidates();
         }
@@ -220,6 +235,38 @@ export class LocationDetailComponent {
       next: () => void this.router.navigate(['/mesta']),
       error: (error) => this.errorMessage.set(readApiError(error))
     });
+  }
+
+  /** [K4] Dogadjaji na ovom mestu; podrazumevano samo predstojeci [K3]. */
+  loadEvents(locationId: number): void {
+    this.eventsLoading.set(true);
+    this.eventsService.byLocation(locationId, this.showPastEvents()).subscribe({
+      next: (events) => {
+        this.events.set(events);
+        this.eventsLoading.set(false);
+      },
+      error: () => {
+        this.events.set([]);
+        this.eventsLoading.set(false);
+      }
+    });
+  }
+
+  togglePastEvents(): void {
+    const loc = this.location();
+    if (!loc) {
+      return;
+    }
+    this.showPastEvents.update((value) => !value);
+    this.loadEvents(loc.id);
+  }
+
+  eventImageUrl(event: Event): string {
+    return this.eventsService.imageUrl(event);
+  }
+
+  eventTypeLabel(type: EventType): string {
+    return EVENT_TYPE_LABELS[type] ?? type;
   }
 
   private clearMessages(): void {

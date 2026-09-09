@@ -1,0 +1,92 @@
+<section class="page form-page">
+  <form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h1>{{ isEdit() ? 'Izmena događaja' : 'Novi događaj' }}</h1>
+    @if (locationName()) {
+      <p class="subtitle">Mesto: <strong>{{ locationName() }}</strong></p>
+    }
+
+    @if (errorMessage()) {
+      <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
+    }
+
+    @if (loading()) {
+      <p class="muted">Učitavanje...</p>
+    }
+
+    <label class="field">
+      <span>Naziv događaja *</span>
+      <input type="text" formControlName="name" />
+      @if (hasError('name')) {
+        <small class="error">Naziv događaja je obavezan.</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>Adresa *</span>
+      <input type="text" formControlName="address" />
+      @if (hasError('address')) {
+        <small class="error">Adresa je obavezna.</small>
+      }
+    </label>
+
+    <div class="grid-2">
+      <label class="field">
+        <span>Tip događaja *</span>
+        <select formControlName="type">
+          @for (type of types; track type) {
+            <option [value]="type">{{ typeLabels[type] }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Datum i vreme *</span>
+        <input type="datetime-local" formControlName="date" />
+        @if (hasError('date')) {
+          <small class="error">Datum i vreme su obavezni.</small>
+        }
+      </label>
+    </div>
+
+    <label class="check-field">
+      <input type="checkbox" formControlName="regular" />
+      <span>
+        Redovan događaj
+        <small class="muted block">Ponavlja se; samo na takav događaj korisnici mogu ostaviti utisak.</small>
+      </span>
+    </label>
+
+    <label class="check-field">
+      <input type="checkbox" formControlName="freeEntry" />
+      <span>Besplatan ulaz</span>
+    </label>
+
+    @if (!isFree) {
+      <label class="field">
+        <span>Cena ulaska (RSD) *</span>
+        <input type="number" formControlName="price" min="0" step="0.01" />
+      </label>
+    }
+
+    <label class="field">
+      <span>Slika {{ isEdit() ? '(ostavite prazno da zadržite postojeću)' : '*' }}</span>
+      <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" (change)="onFileSelected($event)" />
+    </label>
+
+    @if (currentImageUrl()) {
+      <div class="current-image">
+        <span class="muted">Trenutna slika:</span>
+        <img [src]="currentImageUrl()!" alt="Trenutna slika događaja" />
+      </div>
+    }
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+        {{ submitting() ? 'Čuvanje...' : isEdit() ? 'Sačuvaj izmene' : 'Dodaj događaj' }}
+      </button>
+      @if (locationId(); as locId) {
+        <a class="btn btn-ghost" [routerLink]="['/mesta', locId]">Otkaži</a>
+      }
+    </div>
+  </form>
+</section>

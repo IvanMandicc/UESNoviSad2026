@@ -65,5 +65,29 @@ export const routes: Routes = [
       import('./features/locations/detail/location-detail.component').then((m) => m.LocationDetailComponent),
     title: 'Mesto'
   },
+  {
+    // [K4] Dodavanje dogadjaja na mesto - menadzer mesta (ili administrator).
+    path: 'mesta/:locationId/dogadjaji/novi',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/events/form/event-form.component').then((m) => m.EventFormComponent),
+    title: 'Novi dogadjaj'
+  },
+  {
+    // [K4] Izmena dogadjaja.
+    path: 'dogadjaji/:id/izmena',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/events/form/event-form.component').then((m) => m.EventFormComponent),
+    title: 'Izmena dogadjaja'
+  },
+  {
+    // [K4] Stranica dogadjaja.
+    path: 'dogadjaji/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/events/detail/event-detail.component').then((m) => m.EventDetailComponent),
+    title: 'Dogadjaj'
+  },
   { path: '**', redirectTo: '' }
 ];

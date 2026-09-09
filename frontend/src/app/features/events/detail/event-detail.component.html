@@ -1,0 +1,61 @@
+<section class="page">
+  @if (errorMessage()) {
+    <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (event(); as ev) {
+    <a class="back-link" [routerLink]="['/mesta', ev.locationId]">← {{ ev.locationName }}</a>
+
+    <div class="card hero">
+      <img [src]="imageUrl()" [alt]="ev.name" />
+      <div class="hero-body">
+        <div class="badges">
+          <span class="badge badge-role">{{ typeLabel(ev.type) }}</span>
+          @if (ev.regular) {
+            <span class="badge badge-approved">Redovan</span>
+          }
+          @if (ev.hasTakenPlace) {
+            <span class="badge badge-pending">Već održan</span>
+          }
+        </div>
+
+        <h1>{{ ev.name }}</h1>
+
+        <dl class="details">
+          <dt>Mesto</dt>
+          <dd><a [routerLink]="['/mesta', ev.locationId]">{{ ev.locationName }}</a></dd>
+
+          <dt>Adresa</dt>
+          <dd>{{ ev.address }}</dd>
+
+          <dt>Datum i vreme</dt>
+          <dd>{{ ev.date | date: 'EEEE, dd.MM.yyyy. HH:mm' }}</dd>
+
+          <dt>Ulaz</dt>
+          <dd>
+            @if (ev.freeEntry) {
+              <strong class="free">Besplatan</strong>
+            } @else {
+              <strong>{{ ev.price | number: '1.0-2' }} RSD</strong>
+            }
+          </dd>
+
+          @if (ev.regular && ev.timesHeld !== null) {
+            <!-- [K5] Broj održavanja se prikazuje i na utisku. -->
+            <dt>Održan do sada</dt>
+            <dd>{{ ev.timesHeld }} {{ ev.timesHeld === 1 ? 'put' : 'puta' }}</dd>
+          }
+        </dl>
+
+        @if (canManage()) {
+          <div class="hero-actions">
+            <a class="btn btn-ghost btn-sm" [routerLink]="['/dogadjaji', ev.id, 'izmena']">Izmeni</a>
+            <button type="button" class="btn btn-danger btn-sm" (click)="remove()">Ukloni događaj</button>
+          </div>
+        }
+      </div>
+    </div>
+  } @else if (loading()) {
+    <p class="muted">Učitavanje...</p>
+  }
+</section>

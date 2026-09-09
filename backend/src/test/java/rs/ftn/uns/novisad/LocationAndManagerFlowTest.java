@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.ftn.uns.novisad.model.Role;
 import rs.ftn.uns.novisad.model.User;
+import rs.ftn.uns.novisad.repository.EventRepository;
 import rs.ftn.uns.novisad.repository.LocationRepository;
 import rs.ftn.uns.novisad.repository.ManagesRepository;
 import rs.ftn.uns.novisad.repository.UserRepository;
@@ -53,6 +54,9 @@ class LocationAndManagerFlowTest {
     private LocationRepository locationRepository;
 
     @Autowired
+    private EventRepository eventRepository;
+
+    @Autowired
     private ManagesRepository managesRepository;
 
     @Autowired
@@ -62,6 +66,7 @@ class LocationAndManagerFlowTest {
 
     @BeforeEach
     void setUp() {
+        eventRepository.deleteAll();
         managesRepository.deleteAll();
         locationRepository.deleteAll();
         userRepository.findByEmailIgnoreCase(USER_EMAIL).ifPresent(userRepository::delete);

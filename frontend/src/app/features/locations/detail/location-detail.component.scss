@@ -101,3 +101,76 @@
   flex: 1;
   margin-bottom: 0;
 }
+
+/* [K4] Lista dogadjaja na stranici mesta */
+.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.event-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-list li + li {
+  border-top: 1px solid var(--border);
+}
+
+.event-row {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.event-row:hover .event-body strong {
+  color: var(--primary);
+}
+
+.event-row img {
+  width: 4.5rem;
+  height: 3.5rem;
+  object-fit: cover;
+  background: var(--surface-alt);
+  border-radius: 6px;
+}
+
+.event-body .badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.3rem;
+}
+
+.event-price {
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.event-price .free {
+  color: var(--success-text);
+}
+
+@media (max-width: 36rem) {
+  .event-row {
+    grid-template-columns: 3.5rem 1fr;
+  }
+
+  .event-price {
+    grid-column: 2;
+  }
+}

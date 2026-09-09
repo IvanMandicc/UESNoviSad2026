@@ -1,7 +1,8 @@
 # Novi Sad — uputstvo za pokretanje
 
 Implementirano do sada: **K1** (zahtev za registraciju), **K2** (prijava i odjava), **A1**
-(obrada zahteva), **K3** (rukovanje mestima) i **A2** (upravljanje menadžerima mesta). Specifikacija celog projekta je u [README.md](README.md).
+(obrada zahteva), **K3** (rukovanje mestima), **A2** (upravljanje menadžerima mesta) i
+**K4/M1** (rukovanje događajima). Specifikacija celog projekta je u [README.md](README.md).
 
 ## Tehnologije
 
@@ -99,6 +100,15 @@ Za K3 i A2:
    (menja adresu, tip i opis; naziv i sliku ne)
 4. Kao admin ukloni menadžera sa mesta → vraća se na ulogu `USER` **[A2]**
 
+Za K4 i M1 (kao menadžer mesta):
+
+1. Na stranici mesta → **Dodaj događaj** (naziv, adresa, tip, datum, redovan?, cena
+   ili besplatno, slika) **[K4]**
+2. Događaj se pojavljuje u sekciji **Predstojeći događaji** na stranici mesta **[K3]**
+3. **Prikaži i održane** → vide se i događaji koji su prošli
+4. Na stranici događaja: **Izmeni** / **Ukloni događaj** **[M1]**
+5. Za redovan događaj sa više pojava istog naziva prikazuje se **Održan do sada N puta** **[K5]**
+
 ## REST API
 
 | Metoda | Putanja                                       | Pristup | Zahtev |
@@ -121,6 +131,14 @@ Za K3 i A2:
 | GET    | `/api/admin/locations/{id}/managers`          | ADMIN   | A2     |
 | POST   | `/api/admin/locations/{id}/managers`          | ADMIN   | A2     |
 | DELETE | `/api/admin/locations/{id}/managers/{userId}` | ADMIN   | A2     |
+| GET    | `/api/locations/{id}/events?all=`             | prijavljen | K4  |
+| POST   | `/api/locations/{id}/events`                  | menadžer mesta ili ADMIN | K4 |
+| GET    | `/api/locations/{id}/events/permissions`      | prijavljen | K4  |
+| GET    | `/api/events?today=`                          | prijavljen | K4  |
+| GET    | `/api/events/{id}`                            | prijavljen | K4  |
+| GET    | `/api/events/{id}/image`                      | **javno** | K4   |
+| PUT    | `/api/events/{id}`                            | menadžer mesta ili ADMIN | K4 |
+| DELETE | `/api/events/{id}`                            | menadžer mesta ili ADMIN | K4 |
 
 Autorizacija: `Authorization: Bearer <token>`. Token važi 24h (`app.jwt.expiration-seconds`).
 
@@ -128,10 +146,11 @@ Autorizacija: `Authorization: Bearer <token>`. Token važi 24h (`app.jwt.expirat
 
 ```
 backend/src/main/java/rs/ftn/uns/novisad/
-  model/         User, AccountRequest, Location, Manages, Role, RequestStatus, LocationType
+  model/         User, AccountRequest, Location, Manages, Event,
+                 Role, RequestStatus, LocationType, EventType
   repository/    Spring Data JPA repozitorijumi
   service/       AccountRequestService (K1/A1), AuthService (K2),
-                 LocationService (K3), ManagerService (A2)
+                 LocationService (K3), ManagerService (A2), EventService (K4/M1)
   storage/       StorageService + LocalFileSystemStorageService (slike mesta)
   security/      JwtService, JwtAuthenticationFilter, UserDetailsService, 401/403 handleri
   config/        SecurityConfig, CorsConfig, AdminSeeder
@@ -142,7 +161,7 @@ backend/src/main/java/rs/ftn/uns/novisad/
 frontend/src/app/
   core/          modeli, servisi, JWT interceptor, guard-ovi
   features/      auth (login, register), admin (zahtevi), locations (lista,
-                 stranica mesta, forma), home
+                 stranica mesta, forma), events (stranica događaja, forma), home
   shared/        navbar
 ```
 
@@ -158,5 +177,8 @@ frontend/src/app/
 - **Slike mesta** se čuvaju u folderu `backend/uploads/` iza interfejsa `StorageService`.
   Kada dođe UES deo, dodaje se `MinioStorageService` i menja `app.storage.type` — ostatak
   koda ostaje netaknut.
-- **Stranica mesta** ima dve prazne sekcije koje čekaju svoje zahteve: predstojeći
-  događaji (K4) i prosečna ocena mesta (K5).
+- **Prosečna ocena mesta** na stranici mesta i dalje čeka K5.
+- **Redovan događaj** se u bazi vodi kao više pojava sa istim nazivom na istom mestu i
+  različitim datumima. Zato je "koliko se puta događaj održao" (K5) broj pojava tog
+  naziva na tom mestu čiji je datum u prošlosti. Specifikacija ovo ne definiše
+  eksplicitno — ako profesor traži drugačije, menja se samo upit u `EventRepository`.

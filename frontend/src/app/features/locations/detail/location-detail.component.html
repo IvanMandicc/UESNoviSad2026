@@ -75,10 +75,59 @@
       </form>
     }
 
-    <!-- [K4] Predstojeći događaji na ovom mestu. -->
+    <!-- [K4] Događaji na ovom mestu. -->
     <div class="card">
-      <h2>Predstojeći događaji</h2>
-      <p class="muted">Nema predstojećih događaja. (Rukovanje događajima dolazi sa K4.)</p>
+      <div class="section-header">
+        <h2>{{ showPastEvents() ? 'Svi događaji' : 'Predstojeći događaji' }}</h2>
+        <div class="actions">
+          <button type="button" class="btn btn-ghost btn-sm" (click)="togglePastEvents()">
+            {{ showPastEvents() ? 'Samo predstojeći' : 'Prikaži i održane' }}
+          </button>
+          @if (canManageEvents()) {
+            <a class="btn btn-primary btn-sm" [routerLink]="['/mesta', loc.id, 'dogadjaji', 'novi']">
+              Dodaj događaj
+            </a>
+          }
+        </div>
+      </div>
+
+      @if (eventsLoading()) {
+        <p class="muted">Učitavanje...</p>
+      } @else if (events().length === 0) {
+        <p class="muted">
+          {{ showPastEvents() ? 'Na ovom mestu još nema događaja.' : 'Nema predstojećih događaja.' }}
+        </p>
+      } @else {
+        <ul class="event-list">
+          @for (ev of events(); track ev.id) {
+            <li>
+              <a class="event-row" [routerLink]="['/dogadjaji', ev.id]">
+                <img [src]="eventImageUrl(ev)" [alt]="ev.name" loading="lazy" />
+                <div class="event-body">
+                  <div class="badges">
+                    <span class="badge badge-role">{{ eventTypeLabel(ev.type) }}</span>
+                    @if (ev.regular) {
+                      <span class="badge badge-approved">Redovan</span>
+                    }
+                    @if (ev.hasTakenPlace) {
+                      <span class="badge badge-pending">Održan</span>
+                    }
+                  </div>
+                  <strong>{{ ev.name }}</strong>
+                  <small class="muted block">{{ ev.date | date: 'dd.MM.yyyy. HH:mm' }} · {{ ev.address }}</small>
+                </div>
+                <span class="event-price">
+                  @if (ev.freeEntry) {
+                    <span class="free">Besplatno</span>
+                  } @else {
+                    {{ ev.price | number: '1.0-2' }} RSD
+                  }
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
     </div>
 
     <!-- [A2] Upravljanje menadžerima mesta — samo administrator. -->
