@@ -15,10 +15,13 @@ export class LocationSearchService {
     return this.http.post<LocationSearchResult[]>(`${this.baseUrl}/locations`, criteria);
   }
 
-  /** [S1] Slična mesta na osnovu naziva, opisa i sadržaja PDF-a. */
-  similar(locationId: number): Observable<LocationSearchResult[]> {
-    return this.http.get<LocationSearchResult[]>(`${this.baseUrl}/locations/${locationId}/similar`);
-  }
+  // --- van traženog obima: "slična mesta" (more-like-this) ---
+  // Odgovarajući endpoint na backendu (/locations/{id}/similar) je zakomentarisan
+  // u LocationSearchController, pa ovaj poziv ionako ne bi imao gde da stigne.
+  //
+  // similar(locationId: number): Observable<LocationSearchResult[]> {
+  //   return this.http.get<LocationSearchResult[]>(`${this.baseUrl}/locations/${locationId}/similar`);
+  // }
 
   /** Administratorska alatka: ponovno indeksiranje svih mesta. */
   reindex(): Observable<{ message: string }> {

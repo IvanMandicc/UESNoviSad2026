@@ -1,6 +1,10 @@
 /**
- * [S1] Parametri pretrage mesta u Elasticsearch-u.
- * Sva polja su opciona; prazna se izostavljaju iz upita.
+ * [S1] Parametri pretrage mesta u Elasticsearch-u: naziv, opis, sadržaj PDF-a
+ * i opseg broja utisaka. Sva polja su opciona; prazna se izostavljaju iz upita.
+ * <p>
+ * Backend (LocationSearchDto) prima i polja za opseg ocene po kategorijama,
+ * BooleanQuery operator i sortiranje — postoje i rade, samo se odavde ne šalju
+ * jer nisu deo tražene funkcionalnosti.
  */
 export interface LocationSearchCriteria {
   name?: string | null;
@@ -8,22 +12,15 @@ export interface LocationSearchCriteria {
   pdfContent?: string | null;
   minReviews?: number | null;
   maxReviews?: number | null;
-  minPerformance?: number | null;
-  maxPerformance?: number | null;
-  minSoundAndLight?: number | null;
-  maxSoundAndLight?: number | null;
-  minSpace?: number | null;
-  maxSpace?: number | null;
-  minOverall?: number | null;
-  maxOverall?: number | null;
-  /** Operator između zadatih tekstualnih polja. */
-  operator?: 'AND' | 'OR';
-  /** "name" za sortiranje po nazivu; prazno znači po relevantnosti. */
-  sortBy?: string | null;
-  sortDirection?: 'asc' | 'desc' | null;
 }
 
-/** [S1] Jedan rezultat pretrage. */
+/**
+ * [S1] Jedan rezultat pretrage.
+ * <p>
+ * Backend uvek vraća score, highlights i ocene po kategorijama (deo su
+ * odgovora nezavisno od upita), ali ih trenutni prikaz ne koristi jer su
+ * vezani za funkcionalnosti van traženog obima (Highlighter, opseg ocena).
+ */
 export interface LocationSearchResult {
   id: number;
   name: string;

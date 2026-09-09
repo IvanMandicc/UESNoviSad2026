@@ -286,6 +286,15 @@ frontend/src/app/
   testirano je 30%, 25%, 20%, 10%, 2 i 1. Kada baza naraste, prag treba podići.
 - **Elasticsearch nije izvor istine** — relaciona baza jeste. Greška pri indeksiranju se
   beleži u log, ali ne obara poslovnu operaciju; indeks se popravlja preko `reindex`.
+- **Aktivan obim S1 je namerno sužen na traženo:** pretraga po nazivu, opisu i sadržaju
+  PDF-a, i opseg broja utisaka. Kod za BooleanQuery (AND/OR), PhraseQuery/PrefixQuery/
+  FuzzyQuery, opseg ocene po kategorijama, sortiranje po nazivu, Highlighter i
+  "more like this" postoji i radi u `LocationSearchService`, ali je zakomentarisan u
+  `search()` i u `LocationSearchController` (endpoint `/similar`) — nije obrisan, samo
+  isključen. Otkomentarisati po potrebi.
+- **Uzgred popravljeno:** nepostojeća ruta je vraćala `500` umesto `404`, jer je
+  `GlobalExceptionHandler` hvatao `NoResourceFoundException` istim handler-om kao i
+  prave greške. Dodat poseban handler za taj slučaj.
 - **Slike mesta** se čuvaju u folderu `backend/uploads/` iza interfejsa `StorageService`.
   Kada dođe UES deo, dodaje se `MinioStorageService` i menja `app.storage.type` — ostatak
   koda ostaje netaknut.

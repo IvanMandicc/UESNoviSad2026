@@ -9,12 +9,14 @@ import { AuthService } from '../../core/services/auth.service';
 import { LocationSearchService } from '../../core/services/location-search.service';
 
 /**
- * [S1] Napredna pretraga mesta kroz Elasticsearch.
+ * [S1] Pretraga mesta kroz Elasticsearch: po nazivu, opisu, sadržaju PDF-a
+ * i opsegu broja utisaka. Analizator radi nezavisno od velikog i malog slova
+ * i od ćiriličnog ili latiničnog pisma.
  * <p>
- * Tekstualna polja prihvataju posebne oblike unosa: "tačna fraza" pod
- * navodnicima, prefiks* sa zvezdicom i ~pojam sa tildom za tolerantnu pretragu.
- * Upit se pretprocesira analizatorom, pa radi nezavisno od velikog i malog
- * slova i od ćiriličnog ili latiničnog pisma.
+ * BooleanQuery (AND/OR), PhraseQuery/PrefixQuery/FuzzyQuery, opseg ocene po
+ * kategorijama, sortiranje po nazivu, dinamički sažetak i „slična mesta" nisu
+ * deo ovog prikaza — backend ih ima implementirane (LocationSearchService),
+ * samo nisu izloženi ovde jer nisu bili traženi.
  */
 @Component({
   selector: 'app-search',
@@ -35,26 +37,12 @@ export class SearchComponent {
   readonly reindexing = signal(false);
   readonly isAdmin = this.authService.isAdmin;
 
-  /** Naslov iznad rezultata; menja se kada se prikazuju slična mesta. */
-  readonly resultsTitle = signal('Rezultati');
-
   readonly form = this.fb.nonNullable.group({
     name: [''],
     description: [''],
     pdfContent: [''],
     minReviews: [null as number | null],
-    maxReviews: [null as number | null],
-    minPerformance: [null as number | null],
-    maxPerformance: [null as number | null],
-    minSoundAndLight: [null as number | null],
-    maxSoundAndLight: [null as number | null],
-    minSpace: [null as number | null],
-    maxSpace: [null as number | null],
-    minOverall: [null as number | null],
-    maxOverall: [null as number | null],
-    operator: ['AND' as 'AND' | 'OR'],
-    sortBy: [''],
-    sortDirection: ['asc' as 'asc' | 'desc']
+    maxReviews: [null as number | null]
   });
 
   search(): void {
@@ -63,7 +51,6 @@ export class SearchComponent {
     this.loading.set(true);
     this.errorMessage.set(null);
     this.infoMessage.set(null);
-    this.resultsTitle.set('Rezultati');
 
     this.searchService
       .search({
@@ -71,18 +58,7 @@ export class SearchComponent {
         description: values.description.trim() || null,
         pdfContent: values.pdfContent.trim() || null,
         minReviews: values.minReviews,
-        maxReviews: values.maxReviews,
-        minPerformance: values.minPerformance,
-        maxPerformance: values.maxPerformance,
-        minSoundAndLight: values.minSoundAndLight,
-        maxSoundAndLight: values.maxSoundAndLight,
-        minSpace: values.minSpace,
-        maxSpace: values.maxSpace,
-        minOverall: values.minOverall,
-        maxOverall: values.maxOverall,
-        operator: values.operator,
-        sortBy: values.sortBy || null,
-        sortDirection: values.sortDirection
+        maxReviews: values.maxReviews
       })
       .subscribe({
         next: (results) => {
@@ -97,30 +73,10 @@ export class SearchComponent {
       });
   }
 
-  /** [S1] Slična mesta na osnovu naziva, opisa i sadržaja PDF-a. */
-  showSimilar(result: LocationSearchResult): void {
-    this.loading.set(true);
-    this.errorMessage.set(null);
-
-    this.searchService.similar(result.id).subscribe({
-      next: (results) => {
-        this.results.set(results);
-        this.searched.set(true);
-        this.resultsTitle.set(`Mesta slična mestu „${result.name}"`);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        this.errorMessage.set(readApiError(error));
-        this.loading.set(false);
-      }
-    });
-  }
-
   reset(): void {
-    this.form.reset({ operator: 'AND', sortDirection: 'asc' });
+    this.form.reset();
     this.results.set([]);
     this.searched.set(false);
-    this.resultsTitle.set('Rezultati');
     this.errorMessage.set(null);
     this.infoMessage.set(null);
   }
@@ -148,5 +104,10 @@ export class SearchComponent {
 
   pdfUrl(result: LocationSearchResult): string | null {
     return this.searchService.absoluteUrl(result.pdfUrl);
+  }
+
+  reviewCountLabel(count: number | null): string {
+    const value = count ?? 0;
+    return value === 1 ? '1 utisak' : `${value} utisaka`;
   }
 }

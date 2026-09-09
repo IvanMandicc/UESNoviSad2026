@@ -27,21 +27,22 @@ public class LocationSearchController {
     }
 
     /**
-     * [S1] Pretraga mesta. Sva polja su opciona.
-     * <p>
-     * Tekstualna polja prihvataju: {@code "tacna fraza"}, {@code prefiks*}
-     * i {@code ~fuzzy}. Operator AND/OR odredjuje kako se kombinuju.
+     * [S1] Pretraga mesta po nazivu, opisu, sadrzaju PDF-a i opsegu broja utisaka.
+     * Sva polja su opciona.
      */
     @PostMapping("/locations")
     public ResponseEntity<List<LocationSearchResultDto>> search(@Valid @RequestBody LocationSearchDto criteria) {
         return ResponseEntity.ok(searchService.search(criteria));
     }
 
-    /** [S1] Slicna mesta na osnovu naziva, opisa i sadrzaja PDF-a. */
-    @GetMapping("/locations/{id}/similar")
-    public ResponseEntity<List<LocationSearchResultDto>> similar(@PathVariable Long id) {
-        return ResponseEntity.ok(searchService.moreLikeThis(id));
-    }
+    // --- van trazenog obima: "more like this" ---
+    // LocationSearchService.moreLikeThis() i dalje postoji i radi; ruta je
+    // zakomentarisana jer ova funkcionalnost nije trazena.
+    //
+    // @GetMapping("/locations/{id}/similar")
+    // public ResponseEntity<List<LocationSearchResultDto>> similar(@PathVariable Long id) {
+    //     return ResponseEntity.ok(searchService.moreLikeThis(id));
+    // }
 
     /**
      * Ponovno indeksiranje svih mesta - administratorska alatka, korisna posle

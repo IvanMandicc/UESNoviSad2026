@@ -1,7 +1,7 @@
 <section class="page">
   <header class="page-header">
     <div>
-      <h1>Napredna pretraga mesta</h1>
+      <h1>Pretraga mesta</h1>
       <p class="subtitle">
         Pretraga radi nezavisno od velikog i malog slova i od ćiriličnog ili latiničnog pisma.
       </p>
@@ -21,19 +21,10 @@
   }
 
   <form class="card" [formGroup]="form" (ngSubmit)="search()" novalidate>
-    <div class="hint">
-      <strong>Posebni oblici unosa u tekstualnim poljima:</strong>
-      <ul>
-        <li><code>"tačna fraza"</code> — traži reči tim redosledom</li>
-        <li><code>prefiks*</code> — traži sve što počinje tako</li>
-        <li><code>~pojam</code> — toleriše greške u kucanju</li>
-      </ul>
-    </div>
-
     <div class="grid-3">
       <label class="field">
         <span>Naziv mesta</span>
-        <input type="text" formControlName="name" placeholder="npr. studio ili &quot;Studio M&quot;" />
+        <input type="text" formControlName="name" placeholder="npr. studio" />
       </label>
 
       <label class="field">
@@ -43,66 +34,14 @@
 
       <label class="field">
         <span>Opis iz PDF dokumenta</span>
-        <input type="text" formControlName="pdfContent" placeholder="npr. akustika ili ~akustka" />
+        <input type="text" formControlName="pdfContent" placeholder="npr. akustika" />
       </label>
     </div>
-
-    <label class="field operator-field">
-      <span>Kombinovanje popunjenih polja</span>
-      <select formControlName="operator">
-        <option value="AND">AND — moraju svi uslovi</option>
-        <option value="OR">OR — dovoljan je bilo koji</option>
-      </select>
-    </label>
-
-    <h2 class="section-title">Opsezi</h2>
 
     <div class="range-row">
       <span class="range-label">Broj utisaka</span>
       <input type="number" formControlName="minReviews" min="0" placeholder="od" />
       <input type="number" formControlName="maxReviews" min="0" placeholder="do" />
-    </div>
-
-    <div class="range-row">
-      <span class="range-label">Nastup</span>
-      <input type="number" formControlName="minPerformance" min="1" max="10" step="0.1" placeholder="od" />
-      <input type="number" formControlName="maxPerformance" min="1" max="10" step="0.1" placeholder="do" />
-    </div>
-
-    <div class="range-row">
-      <span class="range-label">Zvuk i svetlo</span>
-      <input type="number" formControlName="minSoundAndLight" min="1" max="10" step="0.1" placeholder="od" />
-      <input type="number" formControlName="maxSoundAndLight" min="1" max="10" step="0.1" placeholder="do" />
-    </div>
-
-    <div class="range-row">
-      <span class="range-label">Prostor</span>
-      <input type="number" formControlName="minSpace" min="1" max="10" step="0.1" placeholder="od" />
-      <input type="number" formControlName="maxSpace" min="1" max="10" step="0.1" placeholder="do" />
-    </div>
-
-    <div class="range-row">
-      <span class="range-label">Ukupan utisak</span>
-      <input type="number" formControlName="minOverall" min="1" max="10" step="0.1" placeholder="od" />
-      <input type="number" formControlName="maxOverall" min="1" max="10" step="0.1" placeholder="do" />
-    </div>
-
-    <div class="grid-2 sort-row">
-      <label class="field">
-        <span>Sortiranje</span>
-        <select formControlName="sortBy">
-          <option value="">Po relevantnosti</option>
-          <option value="name">Po nazivu</option>
-        </select>
-      </label>
-
-      <label class="field">
-        <span>Smer</span>
-        <select formControlName="sortDirection">
-          <option value="asc">Rastuće</option>
-          <option value="desc">Opadajuće</option>
-        </select>
-      </label>
     </div>
 
     <div class="form-actions">
@@ -115,7 +54,7 @@
 
   @if (searched()) {
     <div class="results-header">
-      <h2>{{ resultsTitle() }}</h2>
+      <h2>Rezultati</h2>
       <span class="muted">{{ results().length }} rezultata</span>
     </div>
 
@@ -139,30 +78,16 @@
                 } @else {
                   <span class="muted">Bez ocena</span>
                 }
-                · {{ result.reviewCount || 0 }} utisaka
-                @if (result.score !== null) {
-                  · relevantnost {{ result.score | number: '1.2-2' }}
-                }
+                · {{ reviewCountLabel(result.reviewCount) }}
               </p>
 
-              @if (result.highlights.length > 0) {
-                <div class="highlights">
-                  @for (fragment of result.highlights; track $index) {
-                    <p [innerHTML]="fragment"></p>
-                  }
-                </div>
-              }
-
-              <div class="result-actions">
-                @if (pdfUrl(result); as url) {
+              @if (pdfUrl(result); as url) {
+                <div class="result-actions">
                   <a class="btn btn-ghost btn-sm" [href]="url" target="_blank" rel="noopener">
                     Preuzmi PDF opis
                   </a>
-                }
-                <button type="button" class="btn btn-ghost btn-sm" (click)="showSimilar(result)">
-                  Slična mesta
-                </button>
-              </div>
+                </div>
+              }
             </div>
           </li>
         }

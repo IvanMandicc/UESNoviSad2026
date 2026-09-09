@@ -12,6 +12,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -62,6 +63,18 @@ public class GlobalExceptionHandler {
         log.warn("Neuspesna autentifikacija: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiError.of(401, "Unauthorized", "Pogresan email ili lozinka."));
+    }
+
+    /**
+     * Poziv nepostojece rute (npr. obrisan ili preimenovan endpoint, greska u
+     * putanji). Bez ovog handler-a bi upao u handleUnexpected() ispod i vratio
+     * 500 umesto ispravnog 404.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(NoResourceFoundException ex) {
+        log.debug("Nepostojeca ruta: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(404, "Not Found", "Trazena putanja ne postoji."));
     }
 
     @ExceptionHandler(Exception.class)

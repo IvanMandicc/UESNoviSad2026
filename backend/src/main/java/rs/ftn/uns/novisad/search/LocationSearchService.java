@@ -26,9 +26,13 @@ import java.util.List;
 /**
  * [S1] Pretraga mesta u Elasticsearch-u.
  * <p>
- * Podrzana su pojedinacna polja (naziv, opis, sadrzaj PDF-a), opsezi (broj
- * utisaka i prosecne ocene po stavkama), kombinovanje polja AND/OR operatorom,
- * sortiranje po nazivu, dinamicki sazetak i "more like this" pretraga.
+ * Aktivno: pretraga po nazivu, opisu i sadrzaju PDF-a, opseg broja utisaka.
+ * <p>
+ * Kod za BooleanQuery (AND/OR), PhraseQuery/PrefixQuery/FuzzyQuery, opseg
+ * ocene po kategorijama, sortiranje po nazivu, dinamicki sazetak (Highlighter)
+ * i "more like this" postoji i radi (vidi metode ispod), ali je zakomentarisan
+ * u {@link #search(LocationSearchDto)} jer korisnik nije naveo te funkcionalnosti
+ * medju trazenim. Otkomentarisati po potrebi - ostatak koda se ne menja.
  */
 @Service
 public class LocationSearchService {
@@ -65,7 +69,13 @@ public class LocationSearchService {
         this.queryParser = queryParser;
     }
 
-    /** [S1] Pretraga po zadatim kriterijumima. */
+    /**
+     * [S1] Pretraga po nazivu, opisu, sadrzaju PDF-a i opsegu broja utisaka.
+     * <p>
+     * Funkcionalnosti koje korisnik nije trazio (opseg ocene po kategorijama,
+     * BooleanQuery AND/OR, sortiranje po nazivu, Highlighter) su zakomentarisane
+     * ispod - kod postoji, samo nije ukljucen u upit.
+     */
     public List<LocationSearchResultDto> search(LocationSearchDto criteria) {
         List<Query> textQueries = new ArrayList<>();
         addTextQuery(textQueries, FIELD_NAME, criteria.name());
@@ -74,33 +84,40 @@ public class LocationSearchService {
 
         List<Query> rangeQueries = new ArrayList<>();
         addIntRange(rangeQueries, "reviewCount", criteria.minReviews(), criteria.maxReviews());
-        addDoubleRange(rangeQueries, "ratingPerformance", criteria.minPerformance(), criteria.maxPerformance());
-        addDoubleRange(rangeQueries, "ratingSoundAndLight", criteria.minSoundAndLight(), criteria.maxSoundAndLight());
-        addDoubleRange(rangeQueries, "ratingSpace", criteria.minSpace(), criteria.maxSpace());
-        addDoubleRange(rangeQueries, "ratingOverall", criteria.minOverall(), criteria.maxOverall());
 
-        Query query = combine(textQueries, rangeQueries, criteria.useAndOperator());
+        // --- van trazenog obima: opseg prosecne ocene po kategorijama ---
+        // addDoubleRange(rangeQueries, "ratingPerformance", criteria.minPerformance(), criteria.maxPerformance());
+        // addDoubleRange(rangeQueries, "ratingSoundAndLight", criteria.minSoundAndLight(), criteria.maxSoundAndLight());
+        // addDoubleRange(rangeQueries, "ratingSpace", criteria.minSpace(), criteria.maxSpace());
+        // addDoubleRange(rangeQueries, "ratingOverall", criteria.minOverall(), criteria.maxOverall());
+
+        // --- van trazenog obima: BooleanQuery AND/OR izmedju polja - uvek se koristi AND ---
+        Query query = combine(textQueries, rangeQueries, true);
 
         NativeQueryBuilder builder = NativeQuery.builder()
                 .withQuery(query)
-                .withMaxResults(MAX_RESULTS)
-                .withHighlightQuery(new HighlightQuery(toSpringHighlight(), LocationDocument.class));
+                .withMaxResults(MAX_RESULTS);
+                // --- van trazenog obima: dinamicki sazetak (Highlighter) ---
+                // .withHighlightQuery(new HighlightQuery(toSpringHighlight(), LocationDocument.class));
 
+        // --- van trazenog obima: sortiranje po nazivu ---
         // Sortiranje po nazivu koristi zasebno keyword polje; Text polje se ne moze sortirati.
-        if (criteria.sortByName()) {
-            SortOrder order = criteria.sortDescending() ? SortOrder.Desc : SortOrder.Asc;
-            builder.withSort(s -> s.field(f -> f.field("nameSort").order(order)));
-        }
+        // if (criteria.sortByName()) {
+        //     SortOrder order = criteria.sortDescending() ? SortOrder.Desc : SortOrder.Asc;
+        //     builder.withSort(s -> s.field(f -> f.field("nameSort").order(order)));
+        // }
 
         SearchHits<LocationDocument> hits = operations.search(builder.build(), LocationDocument.class);
-        log.info("[S1] Pretraga vratila {} rezultata (operator={})",
-                hits.getTotalHits(), criteria.useAndOperator() ? "AND" : "OR");
+        log.info("[S1] Pretraga vratila {} rezultata", hits.getTotalHits());
 
         return hits.getSearchHits().stream().map(LocationSearchService::toResult).toList();
     }
 
     /**
      * [S1] "More like this" - slicna mesta na osnovu naziva, opisa i PDF sadrzaja.
+     * <p>
+     * Van trazenog obima - metoda i dalje postoji i radi, ali je endpoint u
+     * {@code LocationSearchController} zakomentarisan, pa nije dostupna preko API-ja.
      */
     public List<LocationSearchResultDto> moreLikeThis(Long locationId) {
         Query query = QueryBuilders.moreLikeThis(m -> m
@@ -131,7 +148,12 @@ public class LocationSearchService {
 
     private void addTextQuery(List<Query> target, String field, String value) {
         if (StringUtils.hasText(value)) {
-            target.add(queryParser.build(field, value));
+            // --- van trazenog obima: PhraseQuery/PrefixQuery/FuzzyQuery na osnovu
+            // navodnika/zvezdice/tilde. SearchQueryParser i dalje postoji i radi
+            // (vidi SearchQueryParserTest) - ovde se ne poziva, koristi se obican
+            // match upit umesto njega.
+            // target.add(queryParser.build(field, value));
+            target.add(QueryBuilders.match(m -> m.field(field).query(value)));
         }
     }
 
