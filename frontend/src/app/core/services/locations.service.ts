@@ -1,9 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { Location, LocationAttributes } from '../models/location.models';
+import { Location, LocationAttributes, LocationType } from '../models/location.models';
 
 /** [K3] Rukovanje mestima. */
 @Injectable({ providedIn: 'root' })
@@ -11,8 +11,16 @@ export class LocationsService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/locations`;
 
-  list(): Observable<Location[]> {
-    return this.http.get<Location[]>(this.baseUrl);
+  /** [K6] Pretraga mesta po nazivu, adresi ili tipu mesta. */
+  list(query?: string | null, type?: LocationType | null): Observable<Location[]> {
+    let params = new HttpParams();
+    if (query?.trim()) {
+      params = params.set('query', query.trim());
+    }
+    if (type) {
+      params = params.set('type', type);
+    }
+    return this.http.get<Location[]>(this.baseUrl, { params });
   }
 
   get(id: number): Observable<Location> {

@@ -13,6 +13,7 @@ import rs.ftn.uns.novisad.dto.LocationDto;
 import rs.ftn.uns.novisad.dto.LocationFormDto;
 import rs.ftn.uns.novisad.dto.ManagerDto;
 import rs.ftn.uns.novisad.model.Location;
+import rs.ftn.uns.novisad.model.LocationType;
 import rs.ftn.uns.novisad.service.LocationService;
 import rs.ftn.uns.novisad.service.ManagerService;
 import rs.ftn.uns.novisad.service.ReviewService;
@@ -41,13 +42,16 @@ public class LocationController {
         this.storageService = storageService;
     }
 
+    /** [K6] Pretraga mesta po nazivu, adresi ili tipu mesta. */
     @GetMapping
-    public ResponseEntity<List<LocationDto>> list() {
+    public ResponseEntity<List<LocationDto>> list(
+            @RequestParam(name = "query", required = false) String query,
+            @RequestParam(name = "type", required = false) LocationType type) {
         // [K3] Prosecne ocene za sva mesta jednim upitom, umesto upita po mestu.
         Map<Long, Double> averages = reviewService.findAverageRatingForAllLocations();
         Map<Long, Long> counts = reviewService.countReviewsForAllLocations();
 
-        List<LocationDto> locations = locationService.findAll().stream()
+        List<LocationDto> locations = locationService.search(query, type).stream()
                 .map(location -> LocationDto.summary(
                         location, averages.get(location.getId()), counts.get(location.getId())))
                 .toList();

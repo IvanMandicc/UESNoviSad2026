@@ -1,0 +1,97 @@
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+/* [K6] Traka za filtriranje */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0 1rem;
+  align-items: end;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+}
+
+.filters .field {
+  margin-bottom: 0.75rem;
+}
+
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.filter-actions .btn-primary {
+  width: auto;
+}
+
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1.25rem;
+}
+
+.event-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.event-card:hover {
+  border-color: var(--primary);
+}
+
+.event-card img {
+  width: 100%;
+  height: 9rem;
+  object-fit: cover;
+  background: var(--surface-alt);
+}
+
+.event-body {
+  padding: 1rem;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.event-body h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.02rem;
+}
+
+.meta {
+  margin: 0 0 0.2rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.price {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.price .free {
+  color: var(--success-text);
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+}

@@ -21,6 +21,10 @@ app:
     password: Admin123!
     first-name: Test
     last-name: Admin
+  mail:
+    enabled: false
+    from: noreply@test.rs
+
   storage:
     type: local
     location: target/test-uploads

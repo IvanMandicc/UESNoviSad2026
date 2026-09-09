@@ -1,0 +1,189 @@
+<section class="page">
+  @if (errorMessage()) {
+    <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
+  }
+  @if (infoMessage()) {
+    <div class="alert alert-success" role="status">{{ infoMessage() }}</div>
+  }
+
+  @if (profile(); as p) {
+    <!-- [K10] Podaci i slika profila. -->
+    <div class="card profile-head">
+      <div class="avatar-block">
+        @if (imageUrl(); as url) {
+          <img class="avatar" [src]="url" alt="Slika profila" />
+        } @else {
+          <div class="avatar avatar-empty">{{ p.user.firstName.charAt(0) }}{{ p.user.lastName.charAt(0) }}</div>
+        }
+
+        <label class="field file-field">
+          <span>Promeni sliku</span>
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" (change)="onFileSelected($event)" />
+        </label>
+        <button type="button" class="btn btn-ghost btn-sm"
+                [disabled]="uploadingImage() || !selectedFile"
+                (click)="uploadImage()">
+          {{ uploadingImage() ? 'Slanje...' : 'Sačuvaj sliku' }}
+        </button>
+      </div>
+
+      <div class="profile-info">
+        <h1>{{ p.user.firstName }} {{ p.user.lastName }}</h1>
+        <p class="subtitle">
+          {{ p.user.email }} · <span class="badge badge-role">{{ p.user.role }}</span>
+        </p>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="logout()">Odjavi se</button>
+      </div>
+    </div>
+
+    <!-- [K10] Promena dodatnih podataka. -->
+    <form class="card" [formGroup]="profileForm" (ngSubmit)="saveProfile()" novalidate>
+      <h2>Podaci profila</h2>
+      <p class="subtitle">Email adresa se ne može menjati jer služi za prijavu.</p>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Ime *</span>
+          <input type="text" formControlName="firstName" />
+          @if (hasError('firstName')) {
+            <small class="error">Ime je obavezno.</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Prezime *</span>
+          <input type="text" formControlName="lastName" />
+          @if (hasError('lastName')) {
+            <small class="error">Prezime je obavezno.</small>
+          }
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Grad</span>
+          <input type="text" formControlName="city" />
+        </label>
+
+        <label class="field">
+          <span>Telefon</span>
+          <input type="tel" formControlName="phone" />
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="savingProfile()">
+          {{ savingProfile() ? 'Čuvanje...' : 'Sačuvaj podatke' }}
+        </button>
+      </div>
+    </form>
+
+    <!-- [K9] Promena lozinke. -->
+    <form class="card" [formGroup]="passwordForm" (ngSubmit)="changePassword()" novalidate>
+      <h2>Promena lozinke</h2>
+      <p class="subtitle">Unesite trenutnu lozinku, pa dva puta novu.</p>
+
+      @if (passwordError()) {
+        <div class="alert alert-error" role="alert">{{ passwordError() }}</div>
+      }
+      @if (passwordSuccess()) {
+        <div class="alert alert-success" role="status">{{ passwordSuccess() }}</div>
+      }
+
+      <label class="field">
+        <span>Trenutna lozinka *</span>
+        <input type="password" formControlName="currentPassword" autocomplete="current-password" />
+      </label>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Nova lozinka *</span>
+          <input type="password" formControlName="newPassword" autocomplete="new-password" />
+          @if (hasPasswordError('newPassword')) {
+            <small class="error">Lozinka mora imati najmanje 8 karaktera.</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Potvrda nove lozinke *</span>
+          <input type="password" formControlName="confirmPassword" autocomplete="new-password" />
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="changingPassword()">
+          {{ changingPassword() ? 'Menjanje...' : 'Promeni lozinku' }}
+        </button>
+      </div>
+    </form>
+
+    <!-- [K10] Mesta na kojima je korisnik menadžer. -->
+    @if (p.managedLocations.length > 0) {
+      <div class="card">
+        <h2>Mesta kojima upravljam</h2>
+        <ul class="managed-list">
+          @for (location of p.managedLocations; track location.id) {
+            <li>
+              <a [routerLink]="['/mesta', location.id]">
+                <strong>{{ location.name }}</strong>
+                <small class="muted block">
+                  {{ locationTypeLabel(location.type) }} · {{ location.address }}
+                </small>
+              </a>
+              @if (location.averageRating !== null) {
+                <span class="review-score">{{ location.averageRating | number: '1.1-1' }}</span>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- [K10] Spisak svih utisaka koje je korisnik ostavio. -->
+    <div class="card">
+      <h2>Moji utisci</h2>
+
+      @if (p.reviews.length === 0) {
+        <p class="muted">Još niste ostavili nijedan utisak.</p>
+      } @else {
+        <ul class="review-list">
+          @for (review of p.reviews; track review.id) {
+            <li class="review">
+              <div class="review-head">
+                <div>
+                  <a [routerLink]="['/mesta', review.locationId]"><strong>{{ review.locationName }}</strong></a>
+                  <small class="muted block">
+                    {{ review.eventName }} · {{ review.eventDate | date: 'dd.MM.yyyy.' }}
+                  </small>
+                  <small class="muted block">
+                    Događaj se do tada održao {{ review.timesHeldAtReview }}
+                    {{ review.timesHeldAtReview === 1 ? 'put' : 'puta' }}
+                  </small>
+                </div>
+                @if (review.averageRate !== null) {
+                  <span class="review-score">{{ review.averageRate | number: '1.1-1' }}</span>
+                }
+              </div>
+
+              <ul class="review-rates">
+                @for (category of rateCategories; track category.key) {
+                  @if (rateValue(review, category.key); as value) {
+                    <li><span class="muted">{{ category.label }}</span> <strong>{{ value }}</strong></li>
+                  }
+                }
+              </ul>
+
+              @if (review.comment) {
+                <p class="review-comment">{{ review.comment }}</p>
+              }
+
+              <small class="muted">{{ review.createdAt | date: 'dd.MM.yyyy. HH:mm' }}</small>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  } @else if (loading()) {
+    <p class="muted">Učitavanje...</p>
+  }
+</section>

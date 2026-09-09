@@ -28,13 +28,16 @@ public class AccountRequestService {
     private final AccountRequestRepository accountRequestRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public AccountRequestService(AccountRequestRepository accountRequestRepository,
                                  UserRepository userRepository,
-                                 PasswordEncoder passwordEncoder) {
+                                 PasswordEncoder passwordEncoder,
+                                 EmailService emailService) {
         this.accountRequestRepository = accountRequestRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     /** [K1] Neregistrovan korisnik salje zahtev za registraciju. */
@@ -103,7 +106,7 @@ public class AccountRequestService {
         User saved = userRepository.save(user);
         log.info("Zahtev za registraciju prihvacen [requestId={}, userId={}, email={}]",
                 request.getId(), saved.getId(), saved.getEmail());
-        // TODO [A1]: poslati mejl korisniku da je zahtev prihvacen.
+        emailService.sendRegistrationApproved(saved);
         return saved;
     }
 
@@ -118,7 +121,7 @@ public class AccountRequestService {
 
         AccountRequest saved = accountRequestRepository.save(request);
         log.info("Zahtev za registraciju odbijen [requestId={}, email={}]", saved.getId(), saved.getEmail());
-        // TODO [A1]: poslati mejl korisniku da je zahtev odbijen.
+        emailService.sendRegistrationRejected(saved);
         return saved;
     }
 

@@ -10,6 +10,8 @@ export interface User {
   city: string | null;
   phone: string | null;
   role: Role;
+  /** [K10] Adresa slike profila; null kada korisnik nema sliku. */
+  imageUrl: string | null;
 }
 
 export interface LoginRequest {

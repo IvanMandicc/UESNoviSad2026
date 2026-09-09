@@ -9,6 +9,31 @@
     }
   </header>
 
+  <!-- [K6] Pretraga mesta po nazivu, adresi ili tipu mesta. -->
+  <form class="card filters" (ngSubmit)="load()">
+    <label class="field">
+      <span>Pretraga</span>
+      <input type="search" name="query" [(ngModel)]="query" placeholder="Naziv ili adresa mesta" />
+    </label>
+
+    <label class="field">
+      <span>Tip mesta</span>
+      <select name="type" [(ngModel)]="selectedType">
+        <option [ngValue]="null">Svi tipovi</option>
+        @for (type of types; track type) {
+          <option [ngValue]="type">{{ typeLabels[type] }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-primary">Pretraži</button>
+      @if (hasFilters) {
+        <button type="button" class="btn btn-ghost" (click)="resetFilters()">Poništi</button>
+      }
+    </div>
+  </form>
+
   @if (errorMessage()) {
     <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
   }
@@ -17,9 +42,13 @@
     <p class="muted">Učitavanje...</p>
   } @else if (locations().length === 0) {
     <div class="card empty">
-      Još nema unetih mesta.
-      @if (isAdmin()) {
-        Dodajte prvo mesto klikom na dugme iznad.
+      @if (hasFilters) {
+        Nema mesta koja odgovaraju pretrazi.
+      } @else {
+        Još nema unetih mesta.
+        @if (isAdmin()) {
+          Dodajte prvo mesto klikom na dugme iznad.
+        }
       }
     </div>
   } @else {

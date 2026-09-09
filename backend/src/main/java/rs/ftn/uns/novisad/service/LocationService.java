@@ -2,15 +2,18 @@ package rs.ftn.uns.novisad.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.ftn.uns.novisad.dto.LocationAttributesDto;
 import rs.ftn.uns.novisad.dto.LocationFormDto;
 import rs.ftn.uns.novisad.exception.ApiException;
 import rs.ftn.uns.novisad.model.Location;
+import rs.ftn.uns.novisad.model.LocationType;
 import rs.ftn.uns.novisad.model.Role;
 import rs.ftn.uns.novisad.model.User;
 import rs.ftn.uns.novisad.repository.LocationRepository;
+import rs.ftn.uns.novisad.repository.LocationSpecifications;
 import rs.ftn.uns.novisad.repository.ManagesRepository;
 import rs.ftn.uns.novisad.repository.UserRepository;
 import rs.ftn.uns.novisad.storage.StorageService;
@@ -48,6 +51,14 @@ public class LocationService {
     @Transactional(readOnly = true)
     public List<Location> findAll() {
         return locationRepository.findByActiveTrueOrderByNameAsc();
+    }
+
+    /** [K6] Pretraga mesta po nazivu, adresi ili tipu mesta. */
+    @Transactional(readOnly = true)
+    public List<Location> search(String query, LocationType type) {
+        return locationRepository.findAll(
+                LocationSpecifications.search(query, type),
+                Sort.by(Sort.Direction.ASC, "name"));
     }
 
     @Transactional(readOnly = true)
@@ -148,5 +159,10 @@ public class LocationService {
     private User loadUser(String email) {
         return userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> ApiException.notFound("Korisnik nije pronadjen."));
+    }
+
+    /** Prazan pojam pretrage znaci "ne filtriraj po tome". */
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

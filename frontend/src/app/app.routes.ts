@@ -97,5 +97,21 @@ export const routes: Routes = [
       import('./features/reviews/form/review-form.component').then((m) => m.ReviewFormComponent),
     title: 'Ostavi utisak'
   },
+  {
+    // [K6] Stranica za dogadjaje: danasnji dogadjaji sa svih mesta + filtriranje.
+    path: 'dogadjaji',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/events/list/event-list.component').then((m) => m.EventListComponent),
+    title: 'Dogadjaji'
+  },
+  {
+    // [K9]/[K10] Profil korisnika.
+    path: 'profil',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+    title: 'Moj profil'
+  },
   { path: '**', redirectTo: '' }
 ];

@@ -1,0 +1,109 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ heading }}</h1>
+      <p class="subtitle">Događaji sa svih mesta. Izaberite datum u prošlosti ili budućnosti.</p>
+    </div>
+  </header>
+
+  <!-- [K6] Pretraga i filtriranje događaja. -->
+  <form class="card filters" (ngSubmit)="load()">
+    <label class="field">
+      <span>Pretraga</span>
+      <input type="search" name="query" [(ngModel)]="query" placeholder="Naziv ili adresa" />
+    </label>
+
+    <label class="field">
+      <span>Tip događaja</span>
+      <select name="type" [(ngModel)]="selectedType">
+        <option [ngValue]="null">Svi tipovi</option>
+        @for (type of types; track type) {
+          <option [ngValue]="type">{{ typeLabels[type] }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Mesto</span>
+      <select name="locationId" [(ngModel)]="selectedLocationId">
+        <option [ngValue]="null">Sva mesta</option>
+        @for (location of locations(); track location.id) {
+          <option [ngValue]="location.id">{{ location.name }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Datum</span>
+      <input type="date" name="date" [(ngModel)]="selectedDate" />
+    </label>
+
+    <label class="field">
+      <span>Ulaz</span>
+      <select name="priceFilter" [(ngModel)]="priceFilter">
+        <option value="ALL">Svejedno</option>
+        <option value="FREE">Besplatan</option>
+        <option value="PAID">Plaćen</option>
+      </select>
+    </label>
+
+    @if (priceFilter === 'PAID') {
+      <label class="field">
+        <span>Cena od</span>
+        <input type="number" name="minPrice" [(ngModel)]="minPrice" min="0" />
+      </label>
+
+      <label class="field">
+        <span>Cena do</span>
+        <input type="number" name="maxPrice" [(ngModel)]="maxPrice" min="0" />
+      </label>
+    }
+
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-primary">Pretraži</button>
+      <button type="button" class="btn btn-ghost" (click)="toggleAllDates()">
+        {{ allDates ? 'Samo današnji' : 'Svi datumi' }}
+      </button>
+      <button type="button" class="btn btn-ghost" (click)="resetFilters()">Poništi</button>
+    </div>
+  </form>
+
+  @if (errorMessage()) {
+    <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="muted">Učitavanje...</p>
+  } @else if (events().length === 0) {
+    <div class="card empty">Nema događaja koji odgovaraju pretrazi.</div>
+  } @else {
+    <div class="event-grid">
+      @for (ev of events(); track ev.id) {
+        <a class="event-card" [routerLink]="['/dogadjaji', ev.id]">
+          <img [src]="imageUrl(ev)" [alt]="ev.name" loading="lazy" />
+          <div class="event-body">
+            <div class="badges">
+              <span class="badge badge-role">{{ typeLabel(ev.type) }}</span>
+              @if (ev.regular) {
+                <span class="badge badge-approved">Redovan</span>
+              }
+              @if (ev.hasTakenPlace) {
+                <span class="badge badge-pending">Održan</span>
+              }
+            </div>
+            <h2>{{ ev.name }}</h2>
+            <p class="meta">{{ ev.date | date: 'dd.MM.yyyy. HH:mm' }}</p>
+            <p class="meta">{{ ev.locationName }} · {{ ev.address }}</p>
+            <p class="price">
+              @if (ev.freeEntry) {
+                <span class="free">Besplatan ulaz</span>
+              } @else {
+                {{ ev.price | number: '1.0-2' }} RSD
+              }
+            </p>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</section>

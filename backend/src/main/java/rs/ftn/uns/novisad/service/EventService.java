@@ -2,20 +2,24 @@ package rs.ftn.uns.novisad.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.ftn.uns.novisad.dto.EventFormDto;
 import rs.ftn.uns.novisad.exception.ApiException;
 import rs.ftn.uns.novisad.model.Event;
+import rs.ftn.uns.novisad.model.EventType;
 import rs.ftn.uns.novisad.model.Location;
 import rs.ftn.uns.novisad.model.Role;
 import rs.ftn.uns.novisad.model.User;
 import rs.ftn.uns.novisad.repository.EventRepository;
+import rs.ftn.uns.novisad.repository.EventSpecifications;
 import rs.ftn.uns.novisad.repository.LocationRepository;
 import rs.ftn.uns.novisad.repository.ManagesRepository;
 import rs.ftn.uns.novisad.repository.UserRepository;
 import rs.ftn.uns.novisad.storage.StorageService;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -81,6 +85,36 @@ public class EventService {
     @Transactional(readOnly = true)
     public List<Event> findAll() {
         return eventRepository.findByActiveTrueOrderByDateAsc();
+    }
+
+    /**
+     * [K6] Pretraga i filtriranje dogadjaja. Kada datum nije zadat, prikazuju se
+     * danasnji dogadjaji sa svih mesta - kako trazi specifikacija.
+     */
+    @Transactional(readOnly = true)
+    public List<Event> search(String query,
+                              EventType type,
+                              Long locationId,
+                              LocalDate date,
+                              Boolean freeEntry,
+                              BigDecimal minPrice,
+                              BigDecimal maxPrice,
+                              boolean allDates) {
+        LocalDateTime from = null;
+        LocalDateTime to = null;
+
+        if (date != null) {
+            from = date.atStartOfDay();
+            to = date.atTime(LocalTime.MAX);
+        } else if (!allDates) {
+            LocalDate today = LocalDate.now();
+            from = today.atStartOfDay();
+            to = today.atTime(LocalTime.MAX);
+        }
+
+        return eventRepository.findAll(
+                EventSpecifications.search(query, type, locationId, from, to, freeEntry, minPrice, maxPrice),
+                Sort.by(Sort.Direction.ASC, "date"));
     }
 
     /**

@@ -1,8 +1,14 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import { LOCATION_TYPE_LABELS, Location, LocationType } from '../../../core/models/location.models';
+import {
+  LOCATION_TYPES,
+  LOCATION_TYPE_LABELS,
+  Location,
+  LocationType
+} from '../../../core/models/location.models';
 import { readApiError } from '../../../core/services/api-error.util';
 import { AuthService } from '../../../core/services/auth.service';
 import { LocationsService } from '../../../core/services/locations.service';
@@ -10,7 +16,7 @@ import { LocationsService } from '../../../core/services/locations.service';
 /** [K3] Pregled svih mesta. */
 @Component({
   selector: 'app-location-list',
-  imports: [RouterLink, DecimalPipe],
+  imports: [RouterLink, DecimalPipe, FormsModule],
   templateUrl: './location-list.component.html',
   styleUrl: './location-list.component.scss'
 })
@@ -23,6 +29,12 @@ export class LocationListComponent {
   readonly errorMessage = signal<string | null>(null);
   readonly isAdmin = this.authService.isAdmin;
 
+  /** [K6] Pretraga po nazivu ili adresi i filtriranje po tipu mesta. */
+  readonly types = LOCATION_TYPES;
+  readonly typeLabels = LOCATION_TYPE_LABELS;
+  query = '';
+  selectedType: LocationType | null = null;
+
   constructor() {
     this.load();
   }
@@ -31,7 +43,7 @@ export class LocationListComponent {
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    this.locationsService.list().subscribe({
+    this.locationsService.list(this.query, this.selectedType).subscribe({
       next: (locations) => {
         this.locations.set(locations);
         this.loading.set(false);
@@ -41,6 +53,17 @@ export class LocationListComponent {
         this.loading.set(false);
       }
     });
+  }
+
+  /** [K6] Vraća listu na sva mesta. */
+  resetFilters(): void {
+    this.query = '';
+    this.selectedType = null;
+    this.load();
+  }
+
+  get hasFilters(): boolean {
+    return this.query.trim().length > 0 || this.selectedType !== null;
   }
 
   imageUrl(location: Location): string {

@@ -44,6 +44,10 @@ public class User {
     @Column(length = 30)
     private String phone;
 
+    /** [K10] Kljuc slike profila u skladistu; null dok korisnik ne postavi sliku. */
+    @Column(name = "image_key", length = 300)
+    private String imageKey;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;

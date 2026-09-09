@@ -2,6 +2,7 @@ package rs.ftn.uns.novisad.repository;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import rs.ftn.uns.novisad.model.Event;
 
 import java.time.LocalDateTime;
@@ -12,7 +13,8 @@ import java.util.Optional;
  * Mesto se svuda dovlaci preko {@code @EntityGraph} jer se dogadjaj mapira u DTO
  * tek u kontroleru, van transakcije (spring.jpa.open-in-view = false).
  */
-public interface EventRepository extends JpaRepository<Event, Long> {
+public interface EventRepository extends JpaRepository<Event, Long>,
+        JpaSpecificationExecutor<Event> {
 
     @EntityGraph(attributePaths = "location")
     Optional<Event> findByIdAndActiveTrue(Long id);
@@ -40,4 +42,5 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     long countByNameIgnoreCaseAndLocationIdAndActiveTrueAndDateBefore(String name,
                                                                      Long locationId,
                                                                      LocalDateTime before);
+
 }

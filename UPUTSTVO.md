@@ -2,7 +2,8 @@
 
 Implementirano do sada: **K1** (zahtev za registraciju), **K2** (prijava i odjava), **A1**
 (obrada zahteva), **K3** (rukovanje mestima), **A2** (upravljanje menadžerima mesta) i
-**K4/M1** (rukovanje događajima) i **K5** (utisci i ocene mesta). Specifikacija celog projekta je u [README.md](README.md).
+**K4/M1** (rukovanje događajima), **K5** (utisci i ocene mesta), **K6** (pretraga i
+filtriranje), **K9** (promena lozinke) i **K10** (profil korisnika). Specifikacija celog projekta je u [README.md](README.md).
 
 ## Tehnologije
 
@@ -118,6 +119,21 @@ Za K5 (kao bilo koji prijavljen korisnik):
 4. Komentar je opcion
 5. Nakon objave: srednja ocena mesta se osvežava na stranici mesta i u listi mesta **[K3]**
 
+Za K6:
+
+1. `/mesta` → traka za pretragu: naziv ili adresa + tip mesta
+2. `/dogadjaji` → podrazumevano **današnji događaji sa svih mesta**; filteri: tip, mesto,
+   datum (bilo koji u prošlosti ili budućnosti), besplatan/plaćen ulaz i raspon cene
+3. Dugme **Svi datumi** skida ograničenje na jedan dan
+
+Za K9 i K10:
+
+1. Klik na svoje ime u navigaciji → `/profil`
+2. **Podaci profila** — ime, prezime, grad, telefon (email se ne menja) **[K10]**
+3. **Promeni sliku** → izaberi fajl → **Sačuvaj sliku** **[K10]**
+4. **Promena lozinke** — trenutna, pa dva puta nova **[K9]**
+5. Ispod: **Mesta kojima upravljam** i **Moji utisci** **[K10]**
+
 ## REST API
 
 | Metoda | Putanja                                       | Pristup | Zahtev |
@@ -129,7 +145,7 @@ Za K5 (kao bilo koji prijavljen korisnik):
 | GET    | `/api/admin/registration-requests?all=`       | ADMIN   | A1     |
 | POST   | `/api/admin/registration-requests/{id}/approve` | ADMIN | A1     |
 | POST   | `/api/admin/registration-requests/{id}/reject`  | ADMIN | A1     |
-| GET    | `/api/locations`                              | prijavljen | K3 |
+| GET    | `/api/locations?query=&type=`                 | prijavljen | K3/K6 |
 | GET    | `/api/locations/{id}`                         | prijavljen | K3 |
 | GET    | `/api/locations/{id}/image`                   | **javno** | K3 |
 | POST   | `/api/locations`                              | ADMIN   | K3     |
@@ -143,7 +159,7 @@ Za K5 (kao bilo koji prijavljen korisnik):
 | GET    | `/api/locations/{id}/events?all=`             | prijavljen | K4  |
 | POST   | `/api/locations/{id}/events`                  | menadžer mesta ili ADMIN | K4 |
 | GET    | `/api/locations/{id}/events/permissions`      | prijavljen | K4  |
-| GET    | `/api/events?today=`                          | prijavljen | K4  |
+| GET    | `/api/events?query=&type=&locationId=&date=&freeEntry=&minPrice=&maxPrice=&allDates=` | prijavljen | K4/K6 |
 | GET    | `/api/events/{id}`                            | prijavljen | K4  |
 | GET    | `/api/events/{id}/image`                      | **javno** | K4   |
 | PUT    | `/api/events/{id}`                            | menadžer mesta ili ADMIN | K4 |
@@ -152,6 +168,11 @@ Za K5 (kao bilo koji prijavljen korisnik):
 | POST   | `/api/locations/{id}/reviews`                 | prijavljen | K5  |
 | GET    | `/api/locations/{id}/reviewable-events`       | prijavljen | K5  |
 | GET    | `/api/reviews/{id}`                           | prijavljen | K5  |
+| GET    | `/api/users/me`                               | prijavljen | K10 |
+| PUT    | `/api/users/me`                               | prijavljen | K10 |
+| POST   | `/api/users/me/image`                         | prijavljen | K10 |
+| GET    | `/api/users/{id}/image`                       | **javno** | K10  |
+| POST   | `/api/users/me/password`                      | prijavljen | K9  |
 
 Autorizacija: `Authorization: Bearer <token>`. Token važi 24h (`app.jwt.expiration-seconds`).
 
@@ -161,10 +182,10 @@ Autorizacija: `Authorization: Bearer <token>`. Token važi 24h (`app.jwt.expirat
 backend/src/main/java/rs/ftn/uns/novisad/
   model/         User, AccountRequest, Location, Manages, Event, Review, Rate, Comment,
                  Role, RequestStatus, LocationType, EventType, RateCategory
-  repository/    Spring Data JPA repozitorijumi
+  repository/    + LocationSpecifications i EventSpecifications (dinamicki filteri [K6])
   service/       AccountRequestService (K1/A1), AuthService (K2),
                  LocationService (K3), ManagerService (A2), EventService (K4/M1),
-                 ReviewService (K5)
+                 ReviewService (K5), UserProfileService (K9/K10), EmailService (A1/K9)
   storage/       StorageService + LocalFileSystemStorageService (slike mesta)
   security/      JwtService, JwtAuthenticationFilter, UserDetailsService, 401/403 handleri
   config/        SecurityConfig, CorsConfig, AdminSeeder
@@ -176,14 +197,22 @@ frontend/src/app/
   core/          modeli, servisi, JWT interceptor, guard-ovi
   features/      auth (login, register), admin (zahtevi), locations (lista,
                  stranica mesta, forma), events (stranica događaja, forma),
-                 reviews (forma za utisak), home
+                 events/list (stranica događaja [K6]), reviews (forma za utisak),
+                 profile (podaci, slika, lozinka, utisci [K9]/[K10]), home
   shared/        navbar
 ```
 
 ## Napomene za dalji rad
 
-- **Slanje mejlova** (A1 nakon obrade zahteva, K9 nakon promene lozinke) još nije
-  implementirano — mesta su označena `TODO` u `AccountRequestService`.
+- **Slanje mejlova** je implementirano (`EmailService`) za A1 i K9, ali je
+  **isključeno** (`app.mail.enabled: false`) — poruke se beleže u log umesto da se šalju.
+  Za stvarno slanje: postavi `MAIL_ENABLED=true` i `spring.mail.*` podatke (host, port,
+  username, password) u `application-local.yml`. Kod se ne menja.
+- **Testovi rade nad H2, a aplikacija nad PostgreSQL-om.** Dve greške su prošle testove
+  a pukle na Postgresu (rezervisana reč `VALUE`, i `null` parametri u dinamičkim
+  upitima). Zato su filteri [K6] pisani preko `Specification`-a umesto
+  `(:param is null or ...)` obrasca. Vredi svaku novu funkcionalnost proveriti i na
+  živoj bazi, ne samo testovima.
 - **Uloga MANAGER** prati stanje u tabeli `manages`: korisnik postaje `MANAGER` kada dobije
   prvo mesto, a vraća se na `USER` kada mu se ukloni poslednje. Administrator ne može biti
   menadžer mesta.

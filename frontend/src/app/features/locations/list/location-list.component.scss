@@ -73,3 +73,33 @@
 .rating strong {
   color: var(--primary);
 }
+
+/* [K6] Traka za pretragu */
+.filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 0 1rem;
+  align-items: end;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+}
+
+.filters .field {
+  margin-bottom: 0;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-actions .btn-primary {
+  width: auto;
+}
+
+@media (max-width: 40rem) {
+  .filters {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}

@@ -53,6 +53,13 @@ app:
     type: ${STORAGE_TYPE:local}
     location: ${STORAGE_LOCATION:uploads}
 
+  # [A1]/[K9] Slanje mejlova. Dok je enabled = false, poruke se samo beleze u log.
+  # Za stvarno slanje: enabled = true + spring.mail.* podaci (host, port, username,
+  # password), npr. Gmail SMTP sa app lozinkom.
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:noreply@novisad.rs}
+
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
 

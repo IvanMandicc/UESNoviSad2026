@@ -48,3 +48,17 @@ export interface Event {
   createdAt: string;
   updatedAt: string | null;
 }
+
+/** [K6] Parametri pretrage i filtriranja događaja. */
+export interface EventFilters {
+  query?: string | null;
+  type?: EventType | null;
+  locationId?: number | null;
+  /** Datum u formatu "yyyy-MM-dd"; prazan znači današnji dan. */
+  date?: string | null;
+  freeEntry?: boolean | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  /** Kada je true, ne ograničava se na jedan dan. */
+  allDates?: boolean;
+}

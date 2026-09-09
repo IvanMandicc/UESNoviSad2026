@@ -45,3 +45,13 @@
   font-size: 0.875rem;
   color: var(--muted);
 }
+
+.profile-link {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.profile-link:hover,
+.profile-link.active {
+  color: var(--primary);
+}

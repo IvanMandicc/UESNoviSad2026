@@ -10,7 +10,9 @@ public record UserDto(
         String lastName,
         String city,
         String phone,
-        String role
+        String role,
+        /** [K10] Adresa slike profila; null kada korisnik nema sliku. */
+        String imageUrl
 ) {
     public static UserDto from(User u) {
         return new UserDto(
@@ -20,7 +22,8 @@ public record UserDto(
                 u.getLastName(),
                 u.getCity(),
                 u.getPhone(),
-                u.getRole().name()
+                u.getRole().name(),
+                u.getImageKey() == null ? null : "/api/users/" + u.getId() + "/image"
         );
     }
 }

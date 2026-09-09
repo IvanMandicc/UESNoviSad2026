@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { Event } from '../models/event.models';
+import { Event, EventFilters } from '../models/event.models';
 
 /** [K4] / [M1] Rukovanje događajima. */
 @Injectable({ providedIn: 'root' })
@@ -15,6 +15,39 @@ export class EventsService {
   byLocation(locationId: number, all = false): Observable<Event[]> {
     const params = new HttpParams().set('all', all);
     return this.http.get<Event[]>(`${this.apiUrl}/locations/${locationId}/events`, { params });
+  }
+
+  /**
+   * [K6] Pretraga i filtriranje događaja. Bez filtera vraća današnje događaje
+   * sa svih mesta.
+   */
+  search(filters: EventFilters): Observable<Event[]> {
+    let params = new HttpParams();
+    if (filters.query?.trim()) {
+      params = params.set('query', filters.query.trim());
+    }
+    if (filters.type) {
+      params = params.set('type', filters.type);
+    }
+    if (filters.locationId) {
+      params = params.set('locationId', filters.locationId);
+    }
+    if (filters.date) {
+      params = params.set('date', filters.date);
+    }
+    if (filters.freeEntry !== null && filters.freeEntry !== undefined) {
+      params = params.set('freeEntry', filters.freeEntry);
+    }
+    if (filters.minPrice) {
+      params = params.set('minPrice', filters.minPrice);
+    }
+    if (filters.maxPrice) {
+      params = params.set('maxPrice', filters.maxPrice);
+    }
+    if (filters.allDates) {
+      params = params.set('allDates', true);
+    }
+    return this.http.get<Event[]>(`${this.apiUrl}/events`, { params });
   }
 
   get(id: number): Observable<Event> {

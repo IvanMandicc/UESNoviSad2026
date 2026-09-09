@@ -5,14 +5,18 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import rs.ftn.uns.novisad.dto.EventDto;
 import rs.ftn.uns.novisad.dto.EventFormDto;
 import rs.ftn.uns.novisad.model.Event;
+import rs.ftn.uns.novisad.model.EventType;
 import rs.ftn.uns.novisad.service.EventService;
 import rs.ftn.uns.novisad.storage.StorageService;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /** [K4] / [M1] Rukovanje dogadjajima. */
@@ -50,10 +54,25 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(EventDto.from(created));
     }
 
+    /**
+     * [K6] Stranica za dogadjaje. Bez parametara vraca danasnje dogadjaje sa svih
+     * mesta; moguce je pretraziti po nazivu i adresi i filtrirati po tipu, mestu,
+     * ceni i proizvoljnom datumu u proslosti ili buducnosti.
+     */
     @GetMapping("/events")
     public ResponseEntity<List<EventDto>> list(
-            @RequestParam(name = "today", defaultValue = "false") boolean today) {
-        List<Event> events = today ? eventService.findToday() : eventService.findAll();
+            @RequestParam(name = "query", required = false) String query,
+            @RequestParam(name = "type", required = false) EventType type,
+            @RequestParam(name = "locationId", required = false) Long locationId,
+            @RequestParam(name = "date", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(name = "freeEntry", required = false) Boolean freeEntry,
+            @RequestParam(name = "minPrice", required = false) BigDecimal minPrice,
+            @RequestParam(name = "maxPrice", required = false) BigDecimal maxPrice,
+            @RequestParam(name = "allDates", defaultValue = "false") boolean allDates) {
+
+        List<Event> events = eventService.search(
+                query, type, locationId, date, freeEntry, minPrice, maxPrice, allDates);
         return ResponseEntity.ok(events.stream().map(EventDto::from).toList());
     }
 
