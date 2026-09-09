@@ -70,6 +70,11 @@ export class LocationListComponent {
     return this.locationsService.imageUrl(location);
   }
 
+  /** [UES] Preuzimanje PDF opisa direktno iz prikaza svih mesta. */
+  pdfUrl(location: Location): string | null {
+    return location.pdfUrl ? this.locationsService.absoluteUrl(location.pdfUrl) : null;
+  }
+
   typeLabel(type: LocationType): string {
     return LOCATION_TYPE_LABELS[type] ?? type;
   }

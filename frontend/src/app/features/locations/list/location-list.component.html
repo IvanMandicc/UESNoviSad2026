@@ -54,11 +54,13 @@
   } @else {
     <div class="location-grid">
       @for (location of locations(); track location.id) {
-        <a class="location-card" [routerLink]="['/mesta', location.id]">
-          <img [src]="imageUrl(location)" [alt]="location.name" loading="lazy" />
+        <div class="location-card">
+          <a class="card-link" [routerLink]="['/mesta', location.id]">
+            <img [src]="imageUrl(location)" [alt]="location.name" loading="lazy" />
+          </a>
           <div class="location-body">
             <span class="badge badge-role">{{ typeLabel(location.type) }}</span>
-            <h2>{{ location.name }}</h2>
+            <h2><a [routerLink]="['/mesta', location.id]">{{ location.name }}</a></h2>
             <!-- [K3] Ukupna, srednja vrednost ocene mesta. -->
             <p class="rating">
               @if (location.averageRating !== null) {
@@ -70,8 +72,16 @@
             </p>
             <p class="address">{{ location.address }}</p>
             <p class="description">{{ location.description }}</p>
+
+            <div class="card-actions">
+              <a class="btn btn-ghost btn-sm" [routerLink]="['/mesta', location.id]">Otvori</a>
+              <!-- [UES] Preuzimanje PDF opisa iz prikaza svih mesta. -->
+              @if (pdfUrl(location); as url) {
+                <a class="btn btn-ghost btn-sm" [href]="url" target="_blank" rel="noopener">PDF opis</a>
+              }
+            </div>
           </div>
-        </a>
+        </div>
       }
     </div>
   }

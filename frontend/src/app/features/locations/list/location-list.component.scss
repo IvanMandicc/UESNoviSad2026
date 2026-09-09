@@ -103,3 +103,24 @@
     gap: 0.75rem;
   }
 }
+
+/* Kartica vise nije ceo link, jer sadrzi i dugme za PDF */
+.card-link {
+  display: block;
+}
+
+.location-body h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.location-body h2 a:hover {
+  color: var(--primary);
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
