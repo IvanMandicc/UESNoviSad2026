@@ -103,17 +103,41 @@ Write-Host "=================================================================="
 
 Write-Step "Trazim JDK 21"
 
+function Test-Jdk21Home([string]$candidatePath) {
+    # Vraca $true samo ako je ovo koren JDK 21 instalacije (ima release fajl
+    # sa JAVA_VERSION="21...). Nikad ne baca gresku - vraca $false umesto toga,
+    # da provera jednog kandidata ne obori celu skriptu.
+    try {
+        if (-not $candidatePath) { return $false }
+        $releaseFile = Join-Path $candidatePath "release"
+        if (-not (Test-Path -LiteralPath $releaseFile)) { return $false }
+        $content = Get-Content -LiteralPath $releaseFile -Raw -ErrorAction SilentlyContinue
+        return ($content -match 'JAVA_VERSION="21')
+    } catch {
+        return $false
+    }
+}
+
 function Find-Jdk21 {
-    # 1) JAVA_HOME, ako vec pokazuje na 21
+    # 1) JAVA_HOME, ako vec pokazuje na 21.
+    # Ociscen od navodnika i praznina koje cesto ostanu kad se promenljiva
+    # postavlja rucno preko System Properties (npr. JAVA_HOME="C:\..." sa
+    # navodnicima kopiranim iz uputstva za Linux/Mac, ili slucajan razmak na
+    # kraju) - bez ovoga bi provera tiho ili glasno propala iako JDK postoji.
     if ($env:JAVA_HOME) {
-        $releaseFile = Join-Path $env:JAVA_HOME "release"
-        if (Test-Path $releaseFile) {
-            $content = Get-Content $releaseFile -Raw -ErrorAction SilentlyContinue
-            if ($content -match 'JAVA_VERSION="21') { return $env:JAVA_HOME }
-        }
+        $cleaned = $env:JAVA_HOME.Trim().Trim('"').Trim("'").TrimEnd('\')
+        if (Test-Jdk21Home $cleaned) { return $cleaned }
+        $script:JavaHomeChecked = $cleaned
     }
 
-    # 2) uobicajene instalacione putanje razlicitih distribucija JDK-a
+    # 2) java.exe na PATH-u - moze biti postavljen a JAVA_HOME da ne pokazuje na njega
+    $javaOnPath = Get-Command "java.exe" -ErrorAction SilentlyContinue
+    if ($javaOnPath) {
+        $candidate = Split-Path (Split-Path $javaOnPath.Source -Parent) -Parent
+        if (Test-Jdk21Home $candidate) { return $candidate }
+    }
+
+    # 3) uobicajene instalacione putanje razlicitih distribucija JDK-a
     $patterns = @(
         "C:\Program Files\Eclipse Adoptium\jdk-21*",
         "C:\Program Files\Java\jdk-21*",
@@ -124,7 +148,7 @@ function Find-Jdk21 {
     )
     foreach ($pattern in $patterns) {
         $found = Get-ChildItem -Path $pattern -Directory -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($found) { return $found.FullName }
+        if ($found -and (Test-Jdk21Home $found.FullName)) { return $found.FullName }
     }
     return $null
 }
@@ -132,7 +156,12 @@ function Find-Jdk21 {
 $jdk21 = Find-Jdk21
 if (-not $jdk21) {
     Write-Fail "JDK 21 nije pronadjen ni u JAVA_HOME ni u uobicajenim folderima."
-    Write-Host "    Preuzmi ga sa: https://adoptium.net/temurin/releases/?version=21" -ForegroundColor Yellow
+    if ($script:JavaHomeChecked) {
+        Write-Host "    JAVA_HOME je bio postavljen na: $script:JavaHomeChecked" -ForegroundColor Yellow
+        Write-Host "    Tamo nije nadjen 'release' fajl sa JAVA_VERSION=`"21...`" - proveri da" -ForegroundColor Yellow
+        Write-Host "    JAVA_HOME pokazuje na KOREN JDK instalacije (ne na 'bin' podfolder)." -ForegroundColor Yellow
+    }
+    Write-Host "    Preuzmi JDK 21 sa: https://adoptium.net/temurin/releases/?version=21" -ForegroundColor Yellow
     exit 1
 }
 Write-Ok "JDK 21: $jdk21"
