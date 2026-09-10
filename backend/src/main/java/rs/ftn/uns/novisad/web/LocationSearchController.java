@@ -39,7 +39,8 @@ public class LocationSearchController {
 
     /**
      * [S1] Pretraga mesta po nazivu, opisu, sadrzaju PDF-a i opsegu broja utisaka.
-     * Sva polja su opciona.
+     * Sva polja su opciona. Tekstualna polja se kombinuju BooleanQuery-jem sa
+     * AND ili OR operatorom (parametar {@code operator}, podrazumevano AND).
      */
     @PostMapping("/locations")
     public ResponseEntity<List<LocationSearchResultDto>> search(@Valid @RequestBody LocationSearchDto criteria) {

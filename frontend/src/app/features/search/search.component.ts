@@ -10,13 +10,14 @@ import { LocationSearchService } from '../../core/services/location-search.servi
 
 /**
  * [S1] Pretraga mesta kroz Elasticsearch: po nazivu, opisu, sadržaju PDF-a
- * i opsegu broja utisaka. Analizator radi nezavisno od velikog i malog slova
- * i od ćiriličnog ili latiničnog pisma.
+ * i opsegu broja utisaka, sa BooleanQuery AND/OR operatorom između popunjenih
+ * tekstualnih polja. Analizator radi nezavisno od velikog i malog slova i od
+ * ćiriličnog ili latiničnog pisma.
  * <p>
- * BooleanQuery (AND/OR), PhraseQuery/PrefixQuery/FuzzyQuery, opseg ocene po
- * kategorijama, sortiranje po nazivu, dinamički sažetak i „slična mesta" nisu
- * deo ovog prikaza — backend ih ima implementirane (LocationSearchService),
- * samo nisu izloženi ovde jer nisu bili traženi.
+ * PhraseQuery/PrefixQuery/FuzzyQuery, opseg ocene po kategorijama, sortiranje
+ * po nazivu, dinamički sažetak i „slična mesta" nisu deo ovog prikaza — backend
+ * ih ima implementirane (LocationSearchService), samo nisu izloženi ovde jer
+ * nisu bili traženi.
  */
 @Component({
   selector: 'app-search',
@@ -42,7 +43,8 @@ export class SearchComponent {
     description: [''],
     pdfContent: [''],
     minReviews: [null as number | null],
-    maxReviews: [null as number | null]
+    maxReviews: [null as number | null],
+    operator: ['AND' as 'AND' | 'OR']
   });
 
   search(): void {
@@ -58,7 +60,8 @@ export class SearchComponent {
         description: values.description.trim() || null,
         pdfContent: values.pdfContent.trim() || null,
         minReviews: values.minReviews,
-        maxReviews: values.maxReviews
+        maxReviews: values.maxReviews,
+        operator: values.operator
       })
       .subscribe({
         next: (results) => {
@@ -74,7 +77,7 @@ export class SearchComponent {
   }
 
   reset(): void {
-    this.form.reset();
+    this.form.reset({ operator: 'AND' });
     this.results.set([]);
     this.searched.set(false);
     this.errorMessage.set(null);

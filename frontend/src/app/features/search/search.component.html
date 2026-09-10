@@ -38,6 +38,14 @@
       </label>
     </div>
 
+    <label class="field operator-field">
+      <span>Kombinovanje popunjenih polja</span>
+      <select formControlName="operator">
+        <option value="AND">AND — moraju svi uslovi</option>
+        <option value="OR">OR — dovoljan je bilo koji</option>
+      </select>
+    </label>
+
     <div class="range-row">
       <span class="range-label">Broj utisaka</span>
       <input type="number" formControlName="minReviews" min="0" placeholder="od" />

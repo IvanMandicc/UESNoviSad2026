@@ -197,15 +197,15 @@ Za UES deo (S1):
 1. Kao admin: `/mesta` → izmeni mesto → dodaj **PDF sa opisom mesta**
    (tekst se čita PDFBox-om i indeksira u Elasticsearch)
 2. `/pretraga` → pretraži po **nazivu**, **opisu** ili **opisu iz PDF-a**
-3. Probaj posebne oblike unosa:
-   - `"koncertna dvorana"` — tačna fraza (obrnut redosled ne vraća ništa)
-   - `akust*` — prefiks
-   - `~akustka` — toleriše grešku u kucanju
-4. Probaj **ćirilicu**: `студио` vraća isto što i `studio` i `STUDIO`
-5. Opsezi: broj utisaka i prosečna ocena po stavkama (od–do)
-6. **AND / OR** između popunjenih polja, **sortiranje po nazivu**
-7. U rezultatu: **dinamički sažetak** sa istaknutim pojmom, **Preuzmi PDF opis**
-   i **Slična mesta** (more-like-this)
+3. Probaj **ćirilicu**: `студио` vraća isto što i `studio` i `STUDIO`
+4. **Broj utisaka** (od–do, sa samo donjom ili samo gornjom granicom)
+5. **AND / OR** između popunjenih polja
+6. U rezultatu: **Preuzmi PDF opis**
+
+PhraseQuery/PrefixQuery/FuzzyQuery, opseg ocene po kategorijama, sortiranje po
+nazivu, dinamički sažetak (Highlighter) i "slična mesta" (more-like-this) su
+implementirani i rade u `LocationSearchService`, ali nisu deo aktivnog prikaza
+— vidi napomenu niže.
 
 ## REST API
 
@@ -247,7 +247,6 @@ Za UES deo (S1):
 | GET    | `/api/users/{id}/image`                       | **javno** | K10  |
 | POST   | `/api/users/me/password`                      | prijavljen | K9  |
 | POST   | `/api/search/locations`                       | prijavljen | S1  |
-| GET    | `/api/search/locations/{id}/similar`          | prijavljen | S1  |
 | POST   | `/api/search/reindex`                         | ADMIN   | UES    |
 | GET    | `/api/locations/{id}/pdf`                     | **javno** | UES  |
 
@@ -316,11 +315,12 @@ frontend/src/app/
   `LocationSearchController` ju je za same upite ignorisao dok skripta za pokretanje
   (`scripts/start.ps1`) to nije otkrila.
 - **Aktivan obim S1 je namerno sužen na traženo:** pretraga po nazivu, opisu i sadržaju
-  PDF-a, i opseg broja utisaka. Kod za BooleanQuery (AND/OR), PhraseQuery/PrefixQuery/
-  FuzzyQuery, opseg ocene po kategorijama, sortiranje po nazivu, Highlighter i
-  "more like this" postoji i radi u `LocationSearchService`, ali je zakomentarisan u
-  `search()` i u `LocationSearchController` (endpoint `/similar`) — nije obrisan, samo
-  isključen. Otkomentarisati po potrebi.
+  PDF-a, opseg broja utisaka, i **BooleanQuery sa AND/OR operatorom** između popunjenih
+  tekstualnih polja. Kod za PhraseQuery/PrefixQuery/FuzzyQuery, opseg ocene po
+  kategorijama, sortiranje po nazivu, Highlighter i "more like this" postoji i radi u
+  `LocationSearchService`, ali je zakomentarisan u `search()` i u
+  `LocationSearchController` (endpoint `/similar`) — nije obrisan, samo isključen.
+  Otkomentarisati po potrebi.
 - **Uzgred popravljeno:** nepostojeća ruta je vraćala `500` umesto `404`, jer je
   `GlobalExceptionHandler` hvatao `NoResourceFoundException` istim handler-om kao i
   prave greške. Dodat poseban handler za taj slučaj.

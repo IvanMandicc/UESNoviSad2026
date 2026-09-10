@@ -1,10 +1,11 @@
 /**
- * [S1] Parametri pretrage mesta u Elasticsearch-u: naziv, opis, sadržaj PDF-a
- * i opseg broja utisaka. Sva polja su opciona; prazna se izostavljaju iz upita.
+ * [S1] Parametri pretrage mesta u Elasticsearch-u: naziv, opis, sadržaj PDF-a,
+ * opseg broja utisaka i BooleanQuery operator (AND/OR) između popunjenih
+ * tekstualnih polja. Sva polja su opciona; prazna se izostavljaju iz upita.
  * <p>
- * Backend (LocationSearchDto) prima i polja za opseg ocene po kategorijama,
- * BooleanQuery operator i sortiranje — postoje i rade, samo se odavde ne šalju
- * jer nisu deo tražene funkcionalnosti.
+ * Backend (LocationSearchDto) prima i polja za opseg ocene po kategorijama i
+ * sortiranje — postoje i rade, samo se odavde ne šalju jer nisu deo tražene
+ * funkcionalnosti.
  */
 export interface LocationSearchCriteria {
   name?: string | null;
@@ -12,6 +13,8 @@ export interface LocationSearchCriteria {
   pdfContent?: string | null;
   minReviews?: number | null;
   maxReviews?: number | null;
+  /** Operator između zadatih tekstualnih polja. */
+  operator?: 'AND' | 'OR';
 }
 
 /**

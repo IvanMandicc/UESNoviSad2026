@@ -26,12 +26,13 @@ import java.util.List;
 /**
  * [S1] Pretraga mesta u Elasticsearch-u.
  * <p>
- * Aktivno: pretraga po nazivu, opisu i sadrzaju PDF-a, opseg broja utisaka.
+ * Aktivno: pretraga po nazivu, opisu i sadrzaju PDF-a, opseg broja utisaka,
+ * BooleanQuery sa AND/OR operatorom izmedju tekstualnih polja.
  * <p>
- * Kod za BooleanQuery (AND/OR), PhraseQuery/PrefixQuery/FuzzyQuery, opseg
- * ocene po kategorijama, sortiranje po nazivu, dinamicki sazetak (Highlighter)
- * i "more like this" postoji i radi (vidi metode ispod), ali je zakomentarisan
- * u {@link #search(LocationSearchDto)} jer korisnik nije naveo te funkcionalnosti
+ * Kod za PhraseQuery/PrefixQuery/FuzzyQuery, opseg ocene po kategorijama,
+ * sortiranje po nazivu, dinamicki sazetak (Highlighter) i "more like this"
+ * postoji i radi (vidi metode ispod), ali je zakomentarisan u
+ * {@link #search(LocationSearchDto)} jer korisnik nije naveo te funkcionalnosti
  * medju trazenim. Otkomentarisati po potrebi - ostatak koda se ne menja.
  */
 @Service
@@ -73,8 +74,8 @@ public class LocationSearchService {
      * [S1] Pretraga po nazivu, opisu, sadrzaju PDF-a i opsegu broja utisaka.
      * <p>
      * Funkcionalnosti koje korisnik nije trazio (opseg ocene po kategorijama,
-     * BooleanQuery AND/OR, sortiranje po nazivu, Highlighter) su zakomentarisane
-     * ispod - kod postoji, samo nije ukljucen u upit.
+     * sortiranje po nazivu, Highlighter) su zakomentarisane ispod - kod postoji,
+     * samo nije ukljucen u upit. BooleanQuery AND/OR jeste aktivan.
      */
     public List<LocationSearchResultDto> search(LocationSearchDto criteria) {
         List<Query> textQueries = new ArrayList<>();
@@ -91,8 +92,8 @@ public class LocationSearchService {
         // addDoubleRange(rangeQueries, "ratingSpace", criteria.minSpace(), criteria.maxSpace());
         // addDoubleRange(rangeQueries, "ratingOverall", criteria.minOverall(), criteria.maxOverall());
 
-        // --- van trazenog obima: BooleanQuery AND/OR izmedju polja - uvek se koristi AND ---
-        Query query = combine(textQueries, rangeQueries, true);
+        // [S1] BooleanQuery: tekstualna polja se kombinuju operatorom AND/OR.
+        Query query = combine(textQueries, rangeQueries, criteria.useAndOperator());
 
         NativeQueryBuilder builder = NativeQuery.builder()
                 .withQuery(query)
@@ -108,7 +109,8 @@ public class LocationSearchService {
         // }
 
         SearchHits<LocationDocument> hits = operations.search(builder.build(), LocationDocument.class);
-        log.info("[S1] Pretraga vratila {} rezultata", hits.getTotalHits());
+        log.info("[S1] Pretraga vratila {} rezultata (operator={})",
+                hits.getTotalHits(), criteria.useAndOperator() ? "AND" : "OR");
 
         return hits.getSearchHits().stream().map(LocationSearchService::toResult).toList();
     }
