@@ -7,10 +7,13 @@ powershell -ExecutionPolicy Bypass -File scripts\start.ps1
 ```
 
 ili dvoklik na `scripts\start.bat`. Skripta sama pronalazi JDK 21, proverava
-Node.js i PostgreSQL, pokreće Elasticsearch i MinIO ako su instalirani (inače
-ih preskače i UES deo isključi bez rušenja aplikacije), pa pokreće backend i
-frontend u zasebnim prozorima i otvara pretraživač. Radi na bilo kojoj Windows
-mašini — ne oslanja se na `JAVA_HOME` iz tvog profila niti na fiksne putanje.
+Node.js i PostgreSQL, a Elasticsearch i MinIO (prenosive verzije, bez
+instalacije i bez admin prava) preuzima sama u `tools\` unutar projekta ako ih
+tu već nema — treba samo internet na prvo pokretanje. Ako preuzimanje ne
+uspe (nema interneta), UES deo se isključi bez rušenja aplikacije. Zatim
+pokreće backend i frontend u zasebnim prozorima i otvara pretraživač. Radi na
+bilo kojoj Windows mašini — ne oslanja se na `JAVA_HOME` iz tvog profila niti
+na fiksne putanje kao što je `C:\...`.
 
 Zaustavljanje: `powershell -ExecutionPolicy Bypass -File scripts\stop.ps1`
 (ili `scripts\stop.bat`) — gasi backend, frontend, Elasticsearch i MinIO;
@@ -96,19 +99,37 @@ Testovi (ne traže pokrenut PostgreSQL, koriste H2):
 
 ## 4. Pokretanje Elasticsearch-a i MinIO-a (UES deo)
 
-Oba servisa su instalirana u `C:\UES\tools` i pokreću se bez Dockera.
+Oba servisa se pokreću bez Dockera i bez instalacije/admin prava — koriste se
+prenosive (portable) verzije.
+
+**Preporučeno:** `scripts\start.ps1` (odeljak "Brzi start") sam preuzme
+Elasticsearch i MinIO u `tools\` unutar projekta ako ih tu već nema, podesi ih
+i pokrene — nema ništa da se radi ručno, treba samo internet na prvo
+pokretanje. Ostatak ovog odeljka je za ručno pokretanje u zasebnim
+terminalima (npr. radi lakšeg praćenja logova), ili za mašinu bez interneta na
+kojoj se `tools\` prekopira unapred sa druge mašine.
+
+Ručno, pretpostavljajući da su fajlovi već u `<koren projekta>\tools`
+(raspakovan `elasticsearch-*` folder i `minio.exe`, isto što `start.ps1`
+sam napravi):
 
 **Terminal 3 — Elasticsearch** (`http://localhost:9200`):
 
 ```powershell
-C:\UES\tools\start-elasticsearch.bat
+tools\elasticsearch-*\bin\elasticsearch.bat
 ```
 
 **Terminal 4 — MinIO** (API `:9000`, konzola `http://localhost:9001`):
 
 ```powershell
-C:\UES\tools\start-minio.bat
+$env:MINIO_ROOT_USER = "novisad"
+$env:MINIO_ROOT_PASSWORD = "novisad123"
+tools\minio.exe server tools\minio-data --console-address ":9001"
 ```
+
+Ako su instalirani na neko treće mesto, `start.ps1` ih i dalje nalazi preko
+`-EsPath <put do elasticsearch foldera>` i/ili `-MinioPath <put do minio.exe>`
+(preskače se automatsko preuzimanje).
 
 MinIO pristup: korisnik `novisad`, lozinka `novisad123`. Bucket `novisad` se pravi sam
 pri prvom pokretanju backend-a.

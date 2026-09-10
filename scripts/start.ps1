@@ -16,11 +16,13 @@
 #       upisuje na disk osim ako se to izricito potvrdi).
 #    5. Ako PostgreSQL radi, proverava da li baza 'uesnovisad' postoji i
 #       automatski je pravi ako ne postoji (preko createdb/psql alata).
-#    6. Ako su Elasticsearch i MinIO instalirani (podrazumevano se traze u
-#       C:\UES\tools, po istom rasporedu kao u UPUTSTVO.md), pokrece ih i ceka
-#       da budu spremni. Ako nisu instalirani, backend se pokrece sa
-#       STORAGE_TYPE=local i SEARCH_ENABLED=false - UES deo (pretraga, PDF
-#       indeksiranje) se tada preskace, a ostatak aplikacije radi normalno.
+#    6. Elasticsearch i MinIO: trazi ih u <koren projekta>\tools; ako ih tu
+#       nema, sam ih preuzima (prenosive verzije, bez instalacije/admin prava)
+#       i raspakuje tu - radi na bilo kojoj Windows masini, samo prvi put treba
+#       internet. Zatim ih pokrece i ceka da budu spremni. Ako preuzimanje ne
+#       uspe (nema interneta), backend se pokrece sa STORAGE_TYPE=local i
+#       SEARCH_ENABLED=false - UES deo (pretraga, PDF indeksiranje) se tada
+#       preskace, a ostatak aplikacije radi normalno.
 #    7. Pokrece backend (mvnw spring-boot:run) u novom prozoru i ceka da
 #       odgovori na /api/auth/me.
 #    8. Pokrece frontend (npm start, sa npm install ako nedostaje
@@ -31,10 +33,13 @@
 #  je pustiti skriptu vise puta zaredom.
 #
 #  Parametri:
-#    -SkipEs             ne pokusavaj da pokrenes Elasticsearch/MinIO
-#    -EsPath <put>        gde je raspakovan Elasticsearch (podrazumevano trazi
-#                         C:\UES\tools\elasticsearch-*)
-#    -MinioPath <put>     gde je minio.exe (podrazumevano C:\UES\tools\minio.exe)
+#    -SkipEs             ne pokusavaj da pokrenes/preuzmes Elasticsearch/MinIO
+#    -EsPath <put>        koristi vec raspakovan Elasticsearch sa ove putanje
+#                         umesto <koren projekta>\tools\elasticsearch-* (i
+#                         preskace automatsko preuzimanje)
+#    -MinioPath <put>     koristi vec preuzet minio.exe sa ove putanje umesto
+#                         <koren projekta>\tools\minio.exe (i preskace
+#                         automatsko preuzimanje)
 #    -DbPassword <lozinka> lozinka za PostgreSQL korisnika 'postgres', da se
 #                         izbegne interaktivno pitanje (korisno za automatizaciju)
 # =============================================================================
@@ -52,6 +57,7 @@ $ErrorActionPreference = "Stop"
 $RootDir     = Split-Path -Parent $PSScriptRoot
 $BackendDir  = Join-Path $RootDir "backend"
 $FrontendDir = Join-Path $RootDir "frontend"
+$ToolsDir    = Join-Path $RootDir "tools"
 
 # --- pomocne funkcije ---------------------------------------------------------
 
@@ -293,6 +299,88 @@ if (-not (Test-Port 5432)) {
 
 # --- 5. Elasticsearch + MinIO (UES deo) -----------------------------------------
 
+# Preuzima prenosivu (portable) verziju Elasticsearch-a u $toolsDir i podesava
+# je za lokalni rad: jedan cvor, bez bezbednosnog sloja (aplikacija se
+# povezuje na http://localhost:9200 bez sertifikata i lozinke), spusteni
+# diskovni pragovi da ne blokiraju alokaciju na skoro punom disku. Ne zahteva
+# instalaciju ni administratorska prava - samo se raspakuje u fasciklu
+# projekta, pa radi na bilo kojoj Windows masini dokle god ima interneta na
+# prvom pokretanju.
+function Install-Elasticsearch([string]$toolsDir) {
+    $esVersion = "8.19.5"
+    Write-Host "    Elasticsearch nije pronadjen - preuzimam verziju $esVersion (~400 MB, samo prvi put)..."
+    New-Item -ItemType Directory -Force -Path $toolsDir | Out-Null
+    $zipPath = Join-Path $toolsDir "elasticsearch-$esVersion.zip"
+    $zipUrl  = "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$esVersion-windows-x86_64.zip"
+
+    $prevProgress = $ProgressPreference
+    $ProgressPreference = "SilentlyContinue"
+    try {
+        Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
+    } catch {
+        Write-Warn2 "Preuzimanje Elasticsearch-a nije uspelo: $($_.Exception.Message)"
+        Remove-Item $zipPath -ErrorAction SilentlyContinue
+        return $null
+    } finally {
+        $ProgressPreference = $prevProgress
+    }
+
+    Write-Host "    Raspakujem Elasticsearch..."
+    Expand-Archive -Path $zipPath -DestinationPath $toolsDir -Force
+    Remove-Item $zipPath -Force
+
+    $extracted = Get-ChildItem -Path (Join-Path $toolsDir "elasticsearch-*") -Directory -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if (-not $extracted) {
+        Write-Warn2 "Elasticsearch je preuzet, ali fascikla nakon raspakivanja nije pronadjena."
+        return $null
+    }
+
+    $ymlPath = Join-Path $extracted.FullName "config\elasticsearch.yml"
+    Add-Content -Path $ymlPath -Encoding UTF8 -Value @"
+
+cluster.name: novisad
+node.name: novisad-node-1
+discovery.type: single-node
+network.host: 127.0.0.1
+http.port: 9200
+xpack.security.enabled: false
+xpack.security.enrollment.enabled: false
+xpack.security.http.ssl.enabled: false
+xpack.security.transport.ssl.enabled: false
+cluster.routing.allocation.disk.watermark.low: 2gb
+cluster.routing.allocation.disk.watermark.high: 1gb
+cluster.routing.allocation.disk.watermark.flood_stage: 500mb
+cluster.info.update.interval: 1m
+"@
+
+    Write-Ok "Elasticsearch preuzet i podesen u $($extracted.FullName)"
+    return $extracted.FullName
+}
+
+# Preuzima prenosivi minio.exe (najnoviji stabilan build) u $toolsDir. Kao i
+# Elasticsearch, ne zahteva instalaciju ni administratorska prava.
+function Install-Minio([string]$toolsDir) {
+    Write-Host "    MinIO nije pronadjen - preuzimam (samo prvi put)..."
+    New-Item -ItemType Directory -Force -Path $toolsDir | Out-Null
+    $exePath = Join-Path $toolsDir "minio.exe"
+
+    $prevProgress = $ProgressPreference
+    $ProgressPreference = "SilentlyContinue"
+    try {
+        Invoke-WebRequest -Uri "https://dl.min.io/server/minio/release/windows-amd64/minio.exe" -OutFile $exePath -UseBasicParsing
+    } catch {
+        Write-Warn2 "Preuzimanje MinIO-a nije uspelo: $($_.Exception.Message)"
+        Remove-Item $exePath -ErrorAction SilentlyContinue
+        return $null
+    } finally {
+        $ProgressPreference = $prevProgress
+    }
+
+    Write-Ok "MinIO preuzet u $exePath"
+    return $exePath
+}
+
 $searchEnabled = $false
 $storageType   = "local"
 
@@ -300,13 +388,21 @@ if (-not $SkipEs) {
     Write-Step "Trazim Elasticsearch i MinIO (UES deo)"
 
     if (-not $EsPath) {
-        $esCandidate = Get-ChildItem -Path "C:\UES\tools\elasticsearch-*" -Directory -ErrorAction SilentlyContinue |
+        $esCandidate = Get-ChildItem -Path (Join-Path $ToolsDir "elasticsearch-*") -Directory -ErrorAction SilentlyContinue |
             Select-Object -First 1
-        if ($esCandidate) { $EsPath = $esCandidate.FullName }
+        if ($esCandidate) {
+            $EsPath = $esCandidate.FullName
+        } else {
+            $EsPath = Install-Elasticsearch $ToolsDir
+        }
     }
     if (-not $MinioPath) {
-        $minioCandidate = "C:\UES\tools\minio.exe"
-        if (Test-Path $minioCandidate) { $MinioPath = $minioCandidate }
+        $minioCandidate = Join-Path $ToolsDir "minio.exe"
+        if (Test-Path $minioCandidate) {
+            $MinioPath = $minioCandidate
+        } else {
+            $MinioPath = Install-Minio $ToolsDir
+        }
     }
 
     if ($EsPath -and (Test-Path (Join-Path $EsPath "bin\elasticsearch.bat")) -and $MinioPath -and (Test-Path $MinioPath)) {
@@ -336,8 +432,8 @@ if (-not $SkipEs) {
                 -WindowStyle Hidden
         }
 
-        Write-Host "    Cekam da Elasticsearch i MinIO budu spremni..."
-        $esReady    = Wait-ForHttp "http://localhost:9200/_cluster/health" 90 @(200)
+        Write-Host "    Cekam da Elasticsearch i MinIO budu spremni (prvo pokretanje posle preuzimanja moze potrajati)..."
+        $esReady    = Wait-ForHttp "http://localhost:9200/_cluster/health" 120 @(200)
         $minioReady = Wait-ForHttp "http://localhost:9000/minio/health/live" 30 @(200)
 
         if ($esReady -and $minioReady) {
@@ -348,9 +444,9 @@ if (-not $SkipEs) {
             Write-Warn2 "Elasticsearch/MinIO se nisu podigli na vreme - nastavljam bez UES dela"
         }
     } else {
-        Write-Warn2 "Elasticsearch/MinIO nisu pronadjeni na ovoj masini (trazeno u C:\UES\tools)."
+        Write-Warn2 "Elasticsearch/MinIO nisu dostupni na ovoj masini (verovatno nema interneta za preuzimanje)."
         Write-Warn2 "UES deo (pretraga, PDF indeksiranje) ce biti iskljucen - ostatak aplikacije radi normalno."
-        Write-Warn2 "Uputstvo za instalaciju: UPUTSTVO.md, odeljak 4."
+        Write-Warn2 "Pokreni skriptu ponovo kad bude interneta, ili vidi UPUTSTVO.md, odeljak 4, za rucnu instalaciju."
     }
 } else {
     Write-Step "Elasticsearch/MinIO preskoceni (-SkipEs)"
