@@ -14,16 +14,18 @@
 #    4. Podesava lozinku baze: koristi application-local.yml ako postoji,
 #       DB_PASSWORD ako je vec u okruzenju, inace pita jednom (lozinka se ne
 #       upisuje na disk osim ako se to izricito potvrdi).
-#    5. Ako su Elasticsearch i MinIO instalirani (podrazumevano se traze u
+#    5. Ako PostgreSQL radi, proverava da li baza 'uesnovisad' postoji i
+#       automatski je pravi ako ne postoji (preko createdb/psql alata).
+#    6. Ako su Elasticsearch i MinIO instalirani (podrazumevano se traze u
 #       C:\UES\tools, po istom rasporedu kao u UPUTSTVO.md), pokrece ih i ceka
 #       da budu spremni. Ako nisu instalirani, backend se pokrece sa
 #       STORAGE_TYPE=local i SEARCH_ENABLED=false - UES deo (pretraga, PDF
 #       indeksiranje) se tada preskace, a ostatak aplikacije radi normalno.
-#    6. Pokrece backend (mvnw spring-boot:run) u novom prozoru i ceka da
+#    7. Pokrece backend (mvnw spring-boot:run) u novom prozoru i ceka da
 #       odgovori na /api/auth/me.
-#    7. Pokrece frontend (npm start, sa npm install ako nedostaje
+#    8. Pokrece frontend (npm start, sa npm install ako nedostaje
 #       node_modules) u novom prozoru i ceka da odgovori na :4200.
-#    8. Otvara pretrazivac na http://localhost:4200.
+#    9. Otvara pretrazivac na http://localhost:4200.
 #
 #  Ako je nesto vec pokrenuto (port je zauzet), taj korak se preskace - bezbedno
 #  je pustiti skriptu vise puta zaredom.
@@ -196,6 +198,67 @@ spring:
 "@
         Set-Content -Path $localYml -Value $content -Encoding UTF8
         Write-Ok "Sacuvano u $localYml (u .gitignore je, nece otici u git)"
+    }
+}
+
+# --- 4b. Priprema baze (kreira 'uesnovisad' ako ne postoji) --------------------
+
+Write-Step "Priprema baze podataka"
+
+function Find-PostgresBin {
+    # 1) na PATH
+    $onPath = Get-Command "createdb.exe" -ErrorAction SilentlyContinue
+    if ($onPath) { return Split-Path $onPath.Source -Parent }
+
+    # 2) uobicajena instalaciona putanja (moze biti vise verzija - uzmi najnoviju)
+    $found = Get-ChildItem -Path "C:\Program Files\PostgreSQL\*\bin\createdb.exe" -ErrorAction SilentlyContinue |
+        Sort-Object FullName -Descending | Select-Object -First 1
+    if ($found) { return Split-Path $found.FullName -Parent }
+
+    return $null
+}
+
+if (-not (Test-Port 5432)) {
+    Write-Warn2 "PostgreSQL ne radi - preskacem proveru/kreiranje baze."
+} else {
+    $pgBin = Find-PostgresBin
+    if (-not $pgBin) {
+        Write-Warn2 "Alati PostgreSQL-a (createdb/psql) nisu pronadjeni - baza se ne moze automatski napraviti."
+        Write-Warn2 "Napravi je rucno: createdb -U postgres uesnovisad (vidi UPUTSTVO.md, odeljak 1)."
+    } else {
+        # Lozinka za konekciju: iz application-local.yml ako postoji (tada je nismo
+        # ranije citali), inace je vec u $env:DB_PASSWORD iz koraka 4.
+        $createDbPassword = $env:DB_PASSWORD
+        if (-not $createDbPassword -and (Test-Path $localYml)) {
+            $ymlContent = Get-Content $localYml -Raw
+            if ($ymlContent -match '(?m)^\s*password:\s*(.+?)\s*$') {
+                $createDbPassword = $Matches[1]
+            }
+        }
+
+        if (-not $createDbPassword) {
+            Write-Warn2 "Lozinka za proveru baze nije poznata - preskacem automatsko kreiranje."
+        } else {
+            $env:PGPASSWORD = $createDbPassword
+            try {
+                $psqlExe     = Join-Path $pgBin "psql.exe"
+                $createdbExe = Join-Path $pgBin "createdb.exe"
+
+                $exists = & $psqlExe -U postgres -h localhost -tAc "SELECT 1 FROM pg_database WHERE datname='uesnovisad'" 2>$null
+                if ($exists -match "1") {
+                    Write-Ok "Baza 'uesnovisad' vec postoji"
+                } else {
+                    & $createdbExe -U postgres -h localhost uesnovisad 2>$null
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Ok "Baza 'uesnovisad' je kreirana"
+                    } else {
+                        Write-Warn2 "Nije uspelo automatsko kreiranje baze - proveri lozinku ili je napravi rucno."
+                    }
+                }
+            } finally {
+                Remove-Item Env:\PGPASSWORD -ErrorAction SilentlyContinue
+            }
+        }
     }
 }
 
