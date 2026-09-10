@@ -78,22 +78,23 @@ public class LocationSearchService {
      * samo nije ukljucen u upit. BooleanQuery AND/OR jeste aktivan.
      */
     public List<LocationSearchResultDto> search(LocationSearchDto criteria) {
-        List<Query> textQueries = new ArrayList<>();
-        addTextQuery(textQueries, FIELD_NAME, criteria.name());
-        addTextQuery(textQueries, FIELD_DESCRIPTION, criteria.description());
-        addTextQuery(textQueries, FIELD_PDF, criteria.pdfContent());
-
-        List<Query> rangeQueries = new ArrayList<>();
-        addIntRange(rangeQueries, "reviewCount", criteria.minReviews(), criteria.maxReviews());
+        // [S1] "Kombinacija PRETHODNIH parametara pretrage" - specifikacija trazi da
+        // BooleanQuery AND/OR obuhvati sve parametre nabrojane pre te stavke (naziv,
+        // opis, opis iz PDF-a, opseg broja utisaka, opseg ocene po kategorijama), ne
+        // samo tekstualna polja. Zato su svi u jednoj listi koja ulazi u combine().
+        List<Query> queries = new ArrayList<>();
+        addTextQuery(queries, FIELD_NAME, criteria.name());
+        addTextQuery(queries, FIELD_DESCRIPTION, criteria.description());
+        addTextQuery(queries, FIELD_PDF, criteria.pdfContent());
+        addIntRange(queries, "reviewCount", criteria.minReviews(), criteria.maxReviews());
 
         // --- van trazenog obima: opseg prosecne ocene po kategorijama ---
-        // addDoubleRange(rangeQueries, "ratingPerformance", criteria.minPerformance(), criteria.maxPerformance());
-        // addDoubleRange(rangeQueries, "ratingSoundAndLight", criteria.minSoundAndLight(), criteria.maxSoundAndLight());
-        // addDoubleRange(rangeQueries, "ratingSpace", criteria.minSpace(), criteria.maxSpace());
-        // addDoubleRange(rangeQueries, "ratingOverall", criteria.minOverall(), criteria.maxOverall());
+        // addDoubleRange(queries, "ratingPerformance", criteria.minPerformance(), criteria.maxPerformance());
+        // addDoubleRange(queries, "ratingSoundAndLight", criteria.minSoundAndLight(), criteria.maxSoundAndLight());
+        // addDoubleRange(queries, "ratingSpace", criteria.minSpace(), criteria.maxSpace());
+        // addDoubleRange(queries, "ratingOverall", criteria.minOverall(), criteria.maxOverall());
 
-        // [S1] BooleanQuery: tekstualna polja se kombinuju operatorom AND/OR.
-        Query query = combine(textQueries, rangeQueries, criteria.useAndOperator());
+        Query query = combine(queries, criteria.useAndOperator());
 
         NativeQueryBuilder builder = NativeQuery.builder()
                 .withQuery(query)
@@ -192,24 +193,22 @@ public class LocationSearchService {
     }
 
     /**
-     * [S1] BooleanQuery: tekstualna polja se kombinuju izabranim operatorom,
-     * dok opsezi uvek suzavaju rezultat (uvek AND).
+     * [S1] BooleanQuery: svi zadati parametri (tekstualna polja i opsezi) se
+     * kombinuju istim, izabranim operatorom - AND zahteva da vaze svi, OR da
+     * vazi bar jedan.
      */
-    private static Query combine(List<Query> textQueries, List<Query> rangeQueries, boolean useAnd) {
-        if (textQueries.isEmpty() && rangeQueries.isEmpty()) {
+    private static Query combine(List<Query> queries, boolean useAnd) {
+        if (queries.isEmpty()) {
             return QueryBuilders.matchAll(m -> m);
         }
 
         return QueryBuilders.bool(b -> {
-            if (!textQueries.isEmpty()) {
-                if (useAnd) {
-                    textQueries.forEach(b::must);
-                } else {
-                    textQueries.forEach(b::should);
-                    b.minimumShouldMatch("1");
-                }
+            if (useAnd) {
+                queries.forEach(b::must);
+            } else {
+                queries.forEach(b::should);
+                b.minimumShouldMatch("1");
             }
-            rangeQueries.forEach(b::filter);
             return b;
         });
     }

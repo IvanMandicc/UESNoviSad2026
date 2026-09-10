@@ -315,12 +315,16 @@ frontend/src/app/
   `LocationSearchController` ju je za same upite ignorisao dok skripta za pokretanje
   (`scripts/start.ps1`) to nije otkrila.
 - **Aktivan obim S1 je namerno sužen na traženo:** pretraga po nazivu, opisu i sadržaju
-  PDF-a, opseg broja utisaka, i **BooleanQuery sa AND/OR operatorom** između popunjenih
-  tekstualnih polja. Kod za PhraseQuery/PrefixQuery/FuzzyQuery, opseg ocene po
-  kategorijama, sortiranje po nazivu, Highlighter i "more like this" postoji i radi u
-  `LocationSearchService`, ali je zakomentarisan u `search()` i u
-  `LocationSearchController` (endpoint `/similar`) — nije obrisan, samo isključen.
-  Otkomentarisati po potrebi.
+  PDF-a, opseg broja utisaka, i **BooleanQuery sa AND/OR operatorom**. Specifikacija kaže
+  „kombinacija **prethodnih** parametara pretrage" — AND/OR obuhvata sve navedene
+  parametre (tekstualna polja **i** opseg broja utisaka), ne samo tekstualna polja. Prvi
+  pokušaj je to prevideo: opseg broja utisaka je bio zaseban, uvek-obavezan filter izvan
+  AND/OR odluke, pa je npr. `naziv=X OR minReviews=999` vraćalo prazno čak i kad `X`
+  pogodi — ispravljeno spajanjem svih uslova u jednu listu koja ulazi u `combine()`.
+  Kod za PhraseQuery/PrefixQuery/FuzzyQuery, opseg ocene po kategorijama, sortiranje po
+  nazivu, Highlighter i "more like this" postoji i radi u `LocationSearchService`, ali je
+  zakomentarisan u `search()` i u `LocationSearchController` (endpoint `/similar`) — nije
+  obrisan, samo isključen. Otkomentarisati po potrebi.
 - **Uzgred popravljeno:** nepostojeća ruta je vraćala `500` umesto `404`, jer je
   `GlobalExceptionHandler` hvatao `NoResourceFoundException` istim handler-om kao i
   prave greške. Dodat poseban handler za taj slučaj.
