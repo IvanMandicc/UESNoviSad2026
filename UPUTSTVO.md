@@ -1,5 +1,29 @@
 # Novi Sad — uputstvo za pokretanje
 
+## Brzi start
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start.ps1
+```
+
+ili dvoklik na `scripts\start.bat`. Skripta sama pronalazi JDK 21, proverava
+Node.js i PostgreSQL, pokreće Elasticsearch i MinIO ako su instalirani (inače
+ih preskače i UES deo isključi bez rušenja aplikacije), pa pokreće backend i
+frontend u zasebnim prozorima i otvara pretraživač. Radi na bilo kojoj Windows
+mašini — ne oslanja se na `JAVA_HOME` iz tvog profila niti na fiksne putanje.
+
+Zaustavljanje: `powershell -ExecutionPolicy Bypass -File scripts\stop.ps1`
+(ili `scripts\stop.bat`) — gasi backend, frontend, Elasticsearch i MinIO;
+PostgreSQL ne dira jer je to deljeni sistemski servis.
+
+Parametri `start.ps1`: `-SkipEs` (ne pokušavaj Elasticsearch/MinIO),
+`-EsPath`/`-MinioPath` (druge putanje), `-DbPassword` (izbegava interaktivno
+pitanje za lozinku baze).
+
+Ostatak ovog fajla opisuje isti postupak ručno, korak po korak — koristan kad
+nešto treba podesiti drugačije nego što skripta pretpostavlja.
+
+
 Implementirano do sada: **K1** (zahtev za registraciju), **K2** (prijava i odjava), **A1**
 (obrada zahteva), **K3** (rukovanje mestima), **A2** (upravljanje menadžerima mesta) i
 **K4/M1** (rukovanje događajima), **K5** (utisci i ocene mesta), **K6** (pretraga i
@@ -286,6 +310,11 @@ frontend/src/app/
   testirano je 30%, 25%, 20%, 10%, 2 i 1. Kada baza naraste, prag treba podići.
 - **Elasticsearch nije izvor istine** — relaciona baza jeste. Greška pri indeksiranju se
   beleži u log, ali ne obara poslovnu operaciju; indeks se popravlja preko `reindex`.
+- **Pretraga bez ES-a vraća `503`, ne `500`.** Kada je `SEARCH_ENABLED=false` (nema
+  Elasticsearch-a na mašini), `/api/search/*` vraća jasnu poruku umesto da propadne;
+  `LocationIndexService` je i ranije poštovao tu zastavicu za indeksiranje, ali
+  `LocationSearchController` ju je za same upite ignorisao dok skripta za pokretanje
+  (`scripts/start.ps1`) to nije otkrila.
 - **Aktivan obim S1 je namerno sužen na traženo:** pretraga po nazivu, opisu i sadržaju
   PDF-a, i opseg broja utisaka. Kod za BooleanQuery (AND/OR), PhraseQuery/PrefixQuery/
   FuzzyQuery, opseg ocene po kategorijama, sortiranje po nazivu, Highlighter i
